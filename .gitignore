@@ -35,5 +35,6 @@ build/
 
 ## banco h2
 data/
+*.mv.db
 *.h2.db
 *.h2.trace.db
