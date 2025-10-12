@@ -1,0 +1,135 @@
+package br.com.communitex.service;
+
+import br.senai.sc.communitex.dto.EmpresaRequestDTO;
+import br.senai.sc.communitex.dto.EmpresaResponseDTO;
+import br.senai.sc.communitex.exception.ResourceNotFoundException;
+import br.senai.sc.communitex.model.Empresa;
+import br.senai.sc.communitex.repository.EmpresaRepository;
+import br.senai.sc.communitex.service.EmpresaService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class EmpresaServiceTest {
+
+    @Mock
+    private EmpresaRepository empresaRepository;
+
+    @InjectMocks
+    private EmpresaService empresaService;
+
+    @Test
+    void createEmpresaSuccess() {
+        // Arrange
+        EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
+                "Empresa Teste Ltda",
+                "12.345.678/0001-90",
+                "teste@empresa.com",
+                "(11) 99999-8888"
+        );
+
+        Empresa savedEmpresa = new Empresa();
+        savedEmpresa.setId(1L);
+        savedEmpresa.setRazaoSocial(requestDTO.razaoSocial());
+        savedEmpresa.setCnpj(requestDTO.cnpj());
+        savedEmpresa.setEmail(requestDTO.email());
+        savedEmpresa.setTelefone(requestDTO.telefone());
+
+        when(empresaRepository.save(any(Empresa.class))).thenReturn(savedEmpresa);
+
+        // Act
+        EmpresaResponseDTO response = empresaService.create(requestDTO);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(savedEmpresa.getId(), response.id());
+        assertEquals(requestDTO.razaoSocial(), response.nomeSocial());
+    }
+
+    @Test
+    void findByIdSuccess() {
+        // Arrange
+        Long id = 1L;
+        Empresa empresa = new Empresa();
+        empresa.setId(id);
+        empresa.setRazaoSocial("Empresa Teste");
+
+        when(empresaRepository.findById(id)).thenReturn(Optional.of(empresa));
+
+        // Act
+        EmpresaResponseDTO response = empresaService.findById(id);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(id, response.id());
+        assertEquals("Empresa Teste", response.nomeSocial());
+    }
+
+    @Test
+    void findByIdNotFound() {
+        // Arrange
+        Long id = 1L;
+        when(empresaRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.findById(id));
+    }
+
+    @Test
+    void updateEmpresaSuccess() {
+        // Arrange
+        Long id = 1L;
+        EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
+                "Empresa Atualizada Ltda",
+                "12.345.678/0001-90",
+                "novo@empresa.com",
+                "(11) 98888-7777"
+        );
+
+        Empresa existingEmpresa = new Empresa();
+        existingEmpresa.setId(id);
+
+        when(empresaRepository.findById(id)).thenReturn(Optional.of(existingEmpresa));
+        when(empresaRepository.save(any(Empresa.class))).thenReturn(existingEmpresa);
+
+        // Act
+        EmpresaResponseDTO response = empresaService.update(id, requestDTO);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(requestDTO.razaoSocial(), response.nomeSocial());
+    }
+
+    @Test
+    void deleteEmpresaSuccess() {
+        // Arrange
+        Long id = 1L;
+        when(empresaRepository.existsById(id)).thenReturn(true);
+
+        // Act
+        empresaService.delete(id);
+
+        // Assert
+        verify(empresaRepository, times(1)).existsById(id);
+    }
+
+    @Test
+    void deleteEmpresaNotFound() {
+        // Arrange
+        Long id = 1L;
+        when(empresaRepository.existsById(id)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(id));
+        verify(empresaRepository, never()).deleteById(any());
+    }
+}
