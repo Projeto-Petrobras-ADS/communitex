@@ -29,7 +29,6 @@ class EmpresaServiceTest {
 
     @Test
     void createEmpresaSuccess() {
-        // Arrange
         EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
                 "Empresa Teste Ltda",
                 "12.345.678/0001-90",
@@ -46,10 +45,8 @@ class EmpresaServiceTest {
 
         when(empresaRepository.save(any(Empresa.class))).thenReturn(savedEmpresa);
 
-        // Act
         EmpresaResponseDTO response = empresaService.create(requestDTO);
 
-        // Assert
         assertNotNull(response);
         assertEquals(savedEmpresa.getId(), response.id());
         assertEquals(requestDTO.razaoSocial(), response.nomeSocial());
@@ -57,7 +54,6 @@ class EmpresaServiceTest {
 
     @Test
     void findByIdSuccess() {
-        // Arrange
         Long id = 1L;
         Empresa empresa = new Empresa();
         empresa.setId(id);
@@ -65,10 +61,8 @@ class EmpresaServiceTest {
 
         when(empresaRepository.findById(id)).thenReturn(Optional.of(empresa));
 
-        // Act
         EmpresaResponseDTO response = empresaService.findById(id);
 
-        // Assert
         assertNotNull(response);
         assertEquals(id, response.id());
         assertEquals("Empresa Teste", response.nomeSocial());
@@ -76,17 +70,14 @@ class EmpresaServiceTest {
 
     @Test
     void findByIdNotFound() {
-        // Arrange
         Long id = 1L;
         when(empresaRepository.findById(id)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> empresaService.findById(id));
     }
 
     @Test
     void updateEmpresaSuccess() {
-        // Arrange
         Long id = 1L;
         EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
                 "Empresa Atualizada Ltda",
@@ -101,34 +92,27 @@ class EmpresaServiceTest {
         when(empresaRepository.findById(id)).thenReturn(Optional.of(existingEmpresa));
         when(empresaRepository.save(any(Empresa.class))).thenReturn(existingEmpresa);
 
-        // Act
         EmpresaResponseDTO response = empresaService.update(id, requestDTO);
 
-        // Assert
         assertNotNull(response);
         assertEquals(requestDTO.razaoSocial(), response.nomeSocial());
     }
 
     @Test
     void deleteEmpresaSuccess() {
-        // Arrange
         Long id = 1L;
         when(empresaRepository.existsById(id)).thenReturn(true);
 
-        // Act
         empresaService.delete(id);
 
-        // Assert
         verify(empresaRepository, times(1)).existsById(id);
     }
 
     @Test
     void deleteEmpresaNotFound() {
-        // Arrange
         Long id = 1L;
         when(empresaRepository.existsById(id)).thenReturn(false);
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(id));
         verify(empresaRepository, never()).deleteById(any());
     }
