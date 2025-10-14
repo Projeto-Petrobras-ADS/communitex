@@ -2,6 +2,8 @@ package br.senai.sc.communitex.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.List;
+
 
 public record EmpresaRequestDTO(
         @NotBlank
@@ -11,6 +13,5 @@ public record EmpresaRequestDTO(
         @NotBlank
         String email,
         String telefone
-
 ) {
 }

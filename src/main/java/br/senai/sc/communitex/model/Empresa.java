@@ -40,8 +40,11 @@ public class Empresa {
 
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RepresentanteEmpresa> representantes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Adocao> adocaos;
 
     public Empresa() {
     }
@@ -102,7 +105,6 @@ public class Empresa {
     public void setRepresentantes(List<RepresentanteEmpresa> representantes) {
         this.representantes = representantes;
     }
-
     public String getTelefone() {
         return telefone;
     }
@@ -110,6 +112,15 @@ public class Empresa {
     public void setTelefone(String telefone) {
         this.telefone = telefone;
     }
+
+    public List<Adocao> getAdocaos() {
+        return adocaos;
+    }
+
+    public void setAdocaos(List<Adocao> adocaos) {
+        this.adocaos = adocaos;
+    }
+
 }
 
 

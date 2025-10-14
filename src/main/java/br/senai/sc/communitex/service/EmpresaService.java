@@ -65,7 +65,8 @@ public class EmpresaService {
                 empresa.getCnpj(),
                 empresa.getNomeFantasia(),
                 empresa.getEmail(),
-                empresa.getTelefone()
+                empresa.getTelefone(),
+                empresa.getAdocaos()
         );
    }
 }
