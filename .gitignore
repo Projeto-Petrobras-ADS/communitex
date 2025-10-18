@@ -38,3 +38,4 @@ data/
 *.mv.db
 *.h2.db
 *.h2.trace.db
+*.trace.db
