@@ -2,6 +2,7 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.AdocaoRequestDTO;
 import br.senai.sc.communitex.dto.AdocaoResponseDTO;
+import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.service.AdocaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -60,5 +61,15 @@ public class AdocaoController {
     public ResponseEntity<Void> delete(@PathVariable Long id){
         adocaoService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Finalização da adoção")
+    @ApiResponse(responseCode = "200", description = "Adoção finalizada com sucesso")
+    @ApiResponse(responseCode = "404", description = "Adoção não encontrada")
+    @PutMapping("/{id}/finalizar")
+    public ResponseEntity<AdocaoResponseDTO> finalizeAdoption(@PathVariable Long id){
+        AdocaoResponseDTO response = adocaoService.finalizeAdoption(id);
+        return ResponseEntity.ok(response);
+
     }
 }

@@ -14,6 +14,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(InvalidAdocaoException.class)
+    public ResponseEntity<String> handleInvalidAdocaoException(InvalidAdocaoException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(BusinessExpection.class)
+    public ResponseEntity<String> handleBusinesException(BusinessExpection ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     private record ErrorResponse(int status, String message) {}
 }
 

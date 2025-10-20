@@ -3,6 +3,9 @@ package br.senai.sc.communitex.service;
 
 import br.senai.sc.communitex.dto.AdocaoRequestDTO;
 import br.senai.sc.communitex.dto.AdocaoResponseDTO;
+import br.senai.sc.communitex.enums.StatusAdocao;
+import br.senai.sc.communitex.enums.StatusPraca;
+import br.senai.sc.communitex.exception.InvalidAdocaoException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.model.Empresa;
@@ -12,6 +15,7 @@ import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,12 +48,21 @@ public class AdocaoService {
         Praca praca = pracaRepository.findById(dto.praca().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + dto.praca().getId()));
 
+
+        if (praca.getStatus() == StatusPraca.ADOTADA) {
+            throw new InvalidAdocaoException("Esta praça já está adotada por outra empresa!");
+        }
+
         Adocao adocao = new Adocao();
         adocao.setDataInicio(dto.dataInicio());
         adocao.setDataFim(dto.dataFim());
         adocao.setDescricaoProjeto(dto.descricaoProjeto());
+        adocao.setStatus(dto.status());
         adocao.setEmpresa(empresa);
         adocao.setPraca(praca);
+        praca.setStatus(StatusPraca.ADOTADA);
+        pracaRepository.save(praca);
+
 
         adocaoRepository.save(adocao);
 
@@ -90,6 +103,20 @@ public class AdocaoService {
             throw new ResourceNotFoundException("Praça não encontrado com ID: " + id);
         }
         adocaoRepository.deleteById(id);
+    }
+
+    public AdocaoResponseDTO finalizeAdoption(Long id){
+        Adocao adocao = adocaoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Adoção não encontrada com ID: " + id));
+        adocao.setStatus(StatusAdocao.FINALIZADA);
+        adocao.setDataFim(LocalDate.now());
+
+        Praca praca = adocao.getPraca();
+        praca.setStatus(StatusPraca.DISPONIVEL);
+
+        adocaoRepository.save(adocao);
+
+        return toResponseDTO(adocao);
+
     }
 
 

@@ -1,6 +1,7 @@
 package br.senai.sc.communitex.model;
 
 import br.senai.sc.communitex.enums.StatusPraca;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -40,6 +41,7 @@ public class Praca {
     private StatusPraca status;
 
     @OneToMany(mappedBy = "praca", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Adocao> adocoes = new ArrayList<>();
 
     public Praca() {}

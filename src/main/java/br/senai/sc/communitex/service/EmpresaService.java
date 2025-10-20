@@ -3,6 +3,7 @@ package br.senai.sc.communitex.service;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
+import br.senai.sc.communitex.exception.BusinessExpection;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.repository.EmpresaRepository;
@@ -11,6 +12,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +38,11 @@ public class EmpresaService {
    }
 
    public EmpresaResponseDTO create(EmpresaRequestDTO dto){
+
+       Optional<Empresa> existente = empresaRepository.findByCnpj(dto.cnpj());
+       if(existente.isPresent()){
+            throw new BusinessExpection("Já existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
+       }
         Empresa empresa = new Empresa();
        BeanUtils.copyProperties(dto,empresa);
        return toResponseDTO(empresaRepository.save(empresa));

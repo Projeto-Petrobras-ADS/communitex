@@ -5,5 +5,6 @@ public enum StatusAdocao {
     EM_ANALISE,
     APROVADA,
     CONCLUIDA,
-    REJEITADA
+    REJEITADA,
+    FINALIZADA
 }
