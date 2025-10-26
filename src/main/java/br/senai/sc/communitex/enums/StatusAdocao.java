@@ -6,5 +6,14 @@ public enum StatusAdocao {
     APROVADA,
     CONCLUIDA,
     REJEITADA,
-    FINALIZADA
+    FINALIZADA;
+
+    public static StatusAdocao fromString(String value){
+        for (StatusAdocao status : StatusAdocao.values()){
+            if(status.name().equalsIgnoreCase(value)){
+                return status;
+            }
+        }
+        throw new IllegalStateException("Status invalido: " + value);
+    }
 }
