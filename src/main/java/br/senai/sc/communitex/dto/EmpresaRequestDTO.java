@@ -10,6 +10,7 @@ public record EmpresaRequestDTO(
         String razaoSocial,
         @NotBlank
         String cnpj,
+        String nomeFantasia,
         @NotBlank
         String email,
         String telefone

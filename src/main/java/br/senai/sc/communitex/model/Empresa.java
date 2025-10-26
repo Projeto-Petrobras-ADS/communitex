@@ -1,6 +1,7 @@
 package br.senai.sc.communitex.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -44,6 +45,7 @@ public class Empresa {
     private List<RepresentanteEmpresa> representantes = new ArrayList<>();
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Adocao> adocaos;
 
     public Empresa() {

@@ -6,7 +6,7 @@ import java.util.List;
 
 public record EmpresaResponseDTO(
         Long id,
-        String nomeSocial,
+        String razaoSocial,
         String cnpj,
         String nomeFantasia,
         String email,

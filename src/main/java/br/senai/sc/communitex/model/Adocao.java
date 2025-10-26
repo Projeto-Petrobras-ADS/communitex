@@ -1,6 +1,8 @@
 package br.senai.sc.communitex.model;
 
 import br.senai.sc.communitex.enums.StatusAdocao;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -30,10 +32,12 @@ public class Adocao {
 
     @ManyToOne
     @JoinColumn(name = "empresa_id", nullable = false)
+    @JsonIgnore
     private Empresa empresa;
 
     @ManyToOne
     @JoinColumn(name = "praca_id", nullable = false)
+    @JsonIgnore
     private Praca praca;
 
 
