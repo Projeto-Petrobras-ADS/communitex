@@ -67,11 +67,16 @@ A documentação da API está disponível através do Swagger UI após iniciar a
 - `DELETE` `/representantes/{id}` - Remove um representante
 
 ### Adoções
-- `GET` `/adocoes` - Lista todas as adoções
-- `POST` `/adocoes` - Cria uma nova adoção
-- `GET` `/adocoes/{id}` - Busca adoção por ID
-- `PUT` `/adocoes/{id}` - Atualiza uma adoção
-- `DELETE` `/adocoes/{id}` - Remove uma adoção
+- `GET` `/api/adocoes` - Lista todas as adoções
+- `GET` `/api/adocoes/status?status={status}` - Lista adoções com o status desejado
+- `GET` `/api/adocoes/empresa/{empresaId}` - Lista todas as adoções de uma empresa
+- `GET` `/api/adocoes/praca/{pracaId}` - Lista todas as adoções de uma praça
+- `GET` `/api/adocoes/periodo?inicio={dataInicio}&fim={dataFim}` - Lista todas as adoções ative em um determiado periodo
+- `GET` `/api/adocoes/prestes-a-vencer?dias={dias}&status={status}` - Lista todas as adoções que estão preste a vencer
+- `POST` `/api/adocoes` - Cria uma nova adoção
+- `GET` `/api/adocoes/{id}` - Busca adoção por ID
+- `PUT` `/api/adocoes/{id}` - Atualiza uma adoção
+- `DELETE` `/api/adocoes/{id}` - Remove uma adoção
 
 ## Banco de Dados
 
