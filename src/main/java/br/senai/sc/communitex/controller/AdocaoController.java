@@ -2,6 +2,7 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.AdocaoRequestDTO;
 import br.senai.sc.communitex.dto.AdocaoResponseDTO;
+import br.senai.sc.communitex.dto.AdocaoStatusResponseDTO;
 import br.senai.sc.communitex.enums.StatusAdocao;
 import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.service.AdocaoService;
@@ -15,7 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/adocoes")
+@RequestMapping("/api/adocoes")
 @Tag(name = "Adoções", description = "Endpoints para gerenciamento de adoções")
 public class AdocaoController {
     private final AdocaoService adocaoService;
@@ -74,6 +75,9 @@ public class AdocaoController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Buscar por periodo")
+    @ApiResponse(responseCode = "200", description = "Busca por periodo encontrada com sucesso!")
+    @ApiResponse(responseCode = "404", description = "Busca por periodo não encontrada!")
     @GetMapping("/periodo")
     public ResponseEntity<List<AdocaoResponseDTO>> findByPeriodo(
             @RequestParam LocalDate inicio,
@@ -82,11 +86,17 @@ public class AdocaoController {
         return ResponseEntity.ok(adocaoService.findByPeriodo(inicio, fim));
     }
 
+    @Operation(summary = "Buscar adoções por praça")
+    @ApiResponse(responseCode = "200", description = "Busca de adoção por praça encontrada com sucesso!")
+    @ApiResponse(responseCode = "404", description = "Busca de adoção por praça não encontrada!")
     @GetMapping("/praca/{pracaId}")
     public ResponseEntity<List<AdocaoResponseDTO>> findByPracas(@PathVariable Long pracaId) {
         return ResponseEntity.ok(adocaoService.findByPraca(pracaId));
     }
 
+    @Operation(summary = "Busca de adoções que estão preste a vencer")
+    @ApiResponse(responseCode = "200", description = "Busca de adoções preste a vencer realizada com sucesso!")
+    @ApiResponse(responseCode = "404", description = "Busca de adoções preste a vencer não encontrada")
     @GetMapping("/preste-a-vencer")
     public ResponseEntity<List<AdocaoResponseDTO>> findAdocoesByPrazoEStatus(
             @RequestParam(required = false, defaultValue = "7") Integer dias,
@@ -98,12 +108,18 @@ public class AdocaoController {
 
     }
 
+    @Operation(summary = "Buscar adoções por empresa")
+    @ApiResponse(responseCode = "200", description = "Busca de adoção por empresa encontrada com sucesso!")
+    @ApiResponse(responseCode = "404", description = "Busca de adoção por empresa não encontrada!")
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<List<AdocaoResponseDTO>> findByEmpresas(@PathVariable Long empresaId) {
         return ResponseEntity.ok(adocaoService.findByEmpresa(empresaId));
 
     }
 
+    @Operation(summary = "Buscar adoções por status")
+    @ApiResponse(responseCode = "200", description = "Busca de adoção por status encontrada com sucesso!")
+    @ApiResponse(responseCode = "404", description = "Busca de adoção por status não encontrada!")
     @GetMapping("/status")
     public ResponseEntity<List<AdocaoStatusResponseDTO>> findByStatus(@RequestParam String status) {
         List<AdocaoStatusResponseDTO> result = adocaoService.findByStatus(StatusAdocao.fromString(status));
