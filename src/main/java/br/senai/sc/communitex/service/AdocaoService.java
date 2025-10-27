@@ -103,7 +103,7 @@ public class AdocaoService {
             throw new IllegalStateException("A data final não pode ser anterior à data inicial");
         }
 
-        List<Adocao> adocaos = adocaoRepository.findByPeriodo(inicio, fim);
+        List<Adocao> adocaos = adocaoRepository.findByDataInicioGreaterThanEqualAndDataFimLessThanEqual(inicio, fim);
 
         return  adocaos.stream().map(this::toResponseDTO).toList();
     }
@@ -126,7 +126,7 @@ public class AdocaoService {
     }
 
     public List<AdocaoResponseDTO> findByPraca(Long pracaId) {
-        List<Adocao> adocaos = adocaoRepository.findByPraca(pracaId);
+        List<Adocao> adocaos = adocaoRepository.findByPraca_Id(pracaId);
         return adocaos.stream().map(this::toResponseDTO).toList();
     }
 
