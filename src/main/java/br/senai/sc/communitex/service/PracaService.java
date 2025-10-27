@@ -2,6 +2,7 @@ package br.senai.sc.communitex.service;
 
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
+import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
@@ -34,6 +35,7 @@ public class PracaService {
     public PracaResponseDTO create(PracaRequestDTO dto) {
         Praca praca = new Praca();
         BeanUtils.copyProperties(dto, praca);
+        praca.setStatus(StatusPraca.DISPONIVEL);
         return toResponseDTO(pracaRepository.save(praca));
     }
 
