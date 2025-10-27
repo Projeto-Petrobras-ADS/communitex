@@ -72,7 +72,7 @@ A documentação da API está disponível através do Swagger UI após iniciar a
 - `GET` `/api/adocoes/empresa/{empresaId}` - Lista todas as adoções de uma empresa
 - `GET` `/api/adocoes/praca/{pracaId}` - Lista todas as adoções de uma praça
 - `GET` `/api/adocoes/periodo?inicio={dataInicio}&fim={dataFim}` - Lista todas as adoções ative em um determiado periodo
-- `GET` `/api/adocoes/prestes-a-vencer?dias={dias}&status={status}` - Lista todas as adoções que estão preste a vencer
+- `GET` `/api/adocoesfiltro//prestes-a-vencer?dias={dias}&status={status}` - Lista todas as adoções que estão preste a vencer
 - `POST` `/api/adocoes` - Cria uma nova adoção
 - `GET` `/api/adocoes/{id}` - Busca adoção por ID
 - `PUT` `/api/adocoes/{id}` - Atualiza uma adoção
