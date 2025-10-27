@@ -14,6 +14,6 @@ public record PracaRequestDTO(
     Double longitude,
     @Size(max = 1000) String descricao,
     String fotoUrl,
-    @NotNull StatusPraca status
+    StatusPraca status
 ) {}
 

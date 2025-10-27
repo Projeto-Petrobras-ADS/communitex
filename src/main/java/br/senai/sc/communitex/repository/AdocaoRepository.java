@@ -16,7 +16,7 @@ public interface AdocaoRepository extends JpaRepository<Adocao, Long> {
 
     List<Adocao> findByEmpresaId(Long empresaId);
 
-   List<Adocao> findByDataInicioGreaterThanEqualAndDataFimLessThanEqual(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+    List<Adocao> findByDataInicioGreaterThanEqualAndDataFimLessThanEqual(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 
 
     @Query("SELECT a FROM Adocao a WHERE (:status IS NULL OR a.status = :status) AND a.dataFim BETWEEN :hoje AND :limite")
