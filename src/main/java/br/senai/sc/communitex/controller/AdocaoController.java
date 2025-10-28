@@ -97,7 +97,7 @@ public class AdocaoController {
     @Operation(summary = "Busca de adoções que estão preste a vencer")
     @ApiResponse(responseCode = "200", description = "Busca de adoções preste a vencer realizada com sucesso!")
     @ApiResponse(responseCode = "404", description = "Busca de adoções preste a vencer não encontrada")
-    @GetMapping("/preste-a-vencer")
+    @GetMapping("/filtro/prestes-a-vencer")
     public ResponseEntity<List<AdocaoResponseDTO>> findAdocoesByPrazoEStatus(
             @RequestParam(required = false, defaultValue = "7") Integer dias,
             @RequestParam(required = false) StatusAdocao status

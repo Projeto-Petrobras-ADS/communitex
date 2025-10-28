@@ -29,23 +29,23 @@ public class AdocaoService {
 
     public AdocaoService(AdocaoRepository adocaoRepository,
                          EmpresaRepository empresaRepository,
-                         PracaRepository pracaRepository){
+                         PracaRepository pracaRepository) {
         this.adocaoRepository = adocaoRepository;
         this.empresaRepository = empresaRepository;
         this.pracaRepository = pracaRepository;
     }
 
 
-    public List<AdocaoResponseDTO> findAll(){
+    public List<AdocaoResponseDTO> findAll() {
         return adocaoRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    public AdocaoResponseDTO create(AdocaoRequestDTO dto){
+    public AdocaoResponseDTO create(AdocaoRequestDTO dto) {
         Empresa empresa = empresaRepository.findById(dto.empresa().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: "+ dto.empresa().getId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + dto.empresa().getId()));
         Praca praca = pracaRepository.findById(dto.praca().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + dto.praca().getId()));
 
@@ -59,18 +59,21 @@ public class AdocaoService {
         adocao.setDataFim(dto.dataFim());
         adocao.setDescricaoProjeto(dto.descricaoProjeto());
         adocao.setStatus(dto.status());
+        if (dto.status() == StatusAdocao.EM_ANALISE || dto.status() == StatusAdocao.PROPOSTA) {
+            praca.setStatus(StatusPraca.EM_PROCESSO);
+        } else if (dto.status() == StatusAdocao.APROVADA || dto.status() == StatusAdocao.CONCLUIDA) {
+            praca.setStatus(StatusPraca.ADOTADA);
+        }
         adocao.setEmpresa(empresa);
         adocao.setPraca(praca);
-        praca.setStatus(StatusPraca.ADOTADA);
+
         pracaRepository.save(praca);
-
-
         adocaoRepository.save(adocao);
 
-        return  toResponseDTO(adocao);
+        return toResponseDTO(adocao);
     }
 
-    public AdocaoResponseDTO findById(Long id){
+    public AdocaoResponseDTO findById(Long id) {
         Adocao adocao = adocaoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Adoção não encontrada com ID: " + id));
 
@@ -78,7 +81,7 @@ public class AdocaoService {
 
     }
 
-    public List<AdocaoStatusResponseDTO> findByStatus(StatusAdocao status){
+    public List<AdocaoStatusResponseDTO> findByStatus(StatusAdocao status) {
         List<Adocao> adocaos = adocaoRepository.findByStatus(status);
 
         return adocaos.stream()
@@ -95,17 +98,17 @@ public class AdocaoService {
     }
 
     public List<AdocaoResponseDTO> findByPeriodo(LocalDate inicio, LocalDate fim) {
-        if(inicio == null || fim == null) {
+        if (inicio == null || fim == null) {
             throw new IllegalStateException("As datas de inicio e fim são obrigatorios");
         }
 
-        if(fim.isBefore(inicio)){
+        if (fim.isBefore(inicio)) {
             throw new IllegalStateException("A data final não pode ser anterior à data inicial");
         }
 
         List<Adocao> adocaos = adocaoRepository.findByDataInicioGreaterThanEqualAndDataFimLessThanEqual(inicio, fim);
 
-        return  adocaos.stream().map(this::toResponseDTO).toList();
+        return adocaos.stream().map(this::toResponseDTO).toList();
     }
 
     public List<AdocaoResponseDTO> findByEmpresa(Long empresaId) {
@@ -113,8 +116,8 @@ public class AdocaoService {
         return adocaos.stream().map(this::toResponseDTO).toList();
     }
 
-    public List<AdocaoResponseDTO> findAdocoesByPrazoEStatus(Integer dias, StatusAdocao status){
-        if(dias == null || dias <= 0){
+    public List<AdocaoResponseDTO> findAdocoesByPrazoEStatus(Integer dias, StatusAdocao status) {
+        if (dias == null || dias <= 0) {
             dias = 7;
         }
         LocalDate hoje = LocalDate.now();
@@ -130,7 +133,7 @@ public class AdocaoService {
         return adocaos.stream().map(this::toResponseDTO).toList();
     }
 
-    public AdocaoResponseDTO update(Long id, AdocaoRequestDTO dto){
+    public AdocaoResponseDTO update(Long id, AdocaoRequestDTO dto) {
         Adocao adocao = adocaoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Adoção não encontrada com ID: " + id));
 
@@ -151,14 +154,14 @@ public class AdocaoService {
         return toResponseDTO(adocao);
     }
 
-    public void delete(Long id){
-        if(!adocaoRepository.existsById(id)){
+    public void delete(Long id) {
+        if (!adocaoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Praça não encontrado com ID: " + id);
         }
         adocaoRepository.deleteById(id);
     }
 
-    public AdocaoResponseDTO finalizeAdoption(Long id){
+    public AdocaoResponseDTO finalizeAdoption(Long id) {
         Adocao adocao = adocaoRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Adoção não encontrada com ID: " + id));
         adocao.setStatus(StatusAdocao.FINALIZADA);
         adocao.setDataFim(LocalDate.now());
@@ -173,7 +176,7 @@ public class AdocaoService {
     }
 
 
-    private AdocaoResponseDTO toResponseDTO(Adocao adocao){
+    private AdocaoResponseDTO toResponseDTO(Adocao adocao) {
         return new AdocaoResponseDTO(
                 adocao.getId(),
                 adocao.getDataInicio(),
@@ -184,7 +187,6 @@ public class AdocaoService {
                 adocao.getPraca()
         );
     }
-
 
 
 }
