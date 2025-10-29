@@ -1,6 +1,7 @@
 package br.senai.sc.communitex.dto;
 
 import br.senai.sc.communitex.model.Adocao;
+import br.senai.sc.communitex.model.RepresentanteEmpresa;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ public record EmpresaResponseDTO(
         String nomeFantasia,
         String email,
         String telefone,
+        RepresentanteEmpresa representanteEmpresa,
         List<Adocao> adocaos
 ) {
 }

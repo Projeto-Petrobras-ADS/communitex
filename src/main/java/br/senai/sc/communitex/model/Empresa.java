@@ -24,7 +24,7 @@ public class Empresa {
     private String razaoSocial;
 
     @NotBlank(message = "O campo CNPJ é obrigatório!")
-    @Pattern(regexp = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$",
+    @Pattern(regexp = "\\d{14}",
             message = "CNPJ inválido! Use o formato 00.000.000/0000-00"    )
     private String cnpj;
 
@@ -35,7 +35,7 @@ public class Empresa {
     private String email;
 
 
-    @Pattern(regexp = "^\\(\\d{2}\\)\\s?\\d{4,5}-\\d{4}$",
+    @Pattern(regexp = "\\d{10,11}",
             message ="Telefone inválido! Use o formato (99) 99999-9999")
     private String telefone;
 
@@ -48,6 +48,10 @@ public class Empresa {
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Adocao> adocaos;
+
+    @OneToOne(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private RepresentanteEmpresa representanteEmpresas;
 
     public Empresa() {
     }
@@ -122,6 +126,14 @@ public class Empresa {
 
     public void setAdocaos(List<Adocao> adocaos) {
         this.adocaos = adocaos;
+    }
+
+    public RepresentanteEmpresa getRepresentanteEmpresas() {
+        return representanteEmpresas;
+    }
+
+    public void setRepresentanteEmpresas(RepresentanteEmpresa representanteEmpresas) {
+        this.representanteEmpresas = representanteEmpresas;
     }
 
 }

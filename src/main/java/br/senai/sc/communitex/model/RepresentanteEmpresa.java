@@ -2,6 +2,7 @@ package br.senai.sc.communitex.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,9 +20,13 @@ public class RepresentanteEmpresa {
     @NotNull(message = "O campo Ativo é obrigatório!")
     private Boolean ativo;
 
+    @NotNull(message = "O campo e-mail é obrigatório!")
+    @Email(message = "E-mail inválido")
+    private String email;
+
     @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "empresa_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id", unique = true)
     private Empresa empresa;
 
     public RepresentanteEmpresa() {
@@ -64,5 +69,13 @@ public class RepresentanteEmpresa {
 
     public void setEmpresa(Empresa empresa) {
         this.empresa = empresa;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

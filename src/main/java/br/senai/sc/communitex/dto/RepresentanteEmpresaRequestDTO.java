@@ -10,6 +10,9 @@ public record RepresentanteEmpresaRequestDTO(
         @NotNull(message = "O campo Ativo é obrigatório!")
         Boolean ativo,
 
+        @NotNull(message = "O campo E-mail é obrigatório!")
+        String email,
+
         @NotNull(message = "O campo Empresa ID é obrigatório!")
         Long empresaId
 ) {}
