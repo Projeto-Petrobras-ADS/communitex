@@ -61,6 +61,7 @@ public class RepresentanteEmpresaService {
 
         representante.setNome(dto.nome());
         representante.setAtivo(dto.ativo());
+        representante.setEmail(dto.email());
         representante.setEmpresa(empresa);
 
         representanteRepository.save(representante);
@@ -80,6 +81,7 @@ public class RepresentanteEmpresaService {
                 representante.getId(),
                 representante.getNome(),
                 representante.getAtivo(),
+                representante.getEmail(),
                 representante.getEmpresa().getId(),
                 representante.getEmpresa().getNomeFantasia()
         );

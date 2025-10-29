@@ -45,6 +45,8 @@ public class EmpresaService {
        }
         Empresa empresa = new Empresa();
        BeanUtils.copyProperties(dto,empresa);
+       empresa.setCnpj(dto.cnpj().replaceAll("\\D", ""));
+       empresa.setTelefone(dto.telefone().replaceAll("\\D", ""));
        return toResponseDTO(empresaRepository.save(empresa));
    }
 
@@ -73,6 +75,7 @@ public class EmpresaService {
                 empresa.getNomeFantasia(),
                 empresa.getEmail(),
                 empresa.getTelefone(),
+                empresa.getRepresentanteEmpresas(),
                 empresa.getAdocaos()
         );
    }
