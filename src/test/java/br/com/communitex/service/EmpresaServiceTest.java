@@ -4,6 +4,7 @@ import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
+import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.service.EmpresaService;
 import org.junit.jupiter.api.Test;
@@ -29,11 +30,23 @@ class EmpresaServiceTest {
 
     @Test
     void createEmpresaSuccess() {
+
+        RepresentanteEmpresa representante = new RepresentanteEmpresa();
+        representante.setId(1L);
+        representante.setNome("João da Silva");
+        representante.setEmail("joao@empresa.com");
+        representante.setAtivo(true);
+
+
         EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
                 "Empresa Teste Ltda",
                 "12.345.678/0001-90",
-                "teste@empresa.com",
-                "(11) 99999-8888"
+                "Empresa Teste",
+                "empresaTeste@teste.com",
+                "48999999999",
+                representante
+
+
         );
 
         Empresa savedEmpresa = new Empresa();

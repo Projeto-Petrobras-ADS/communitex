@@ -20,37 +20,37 @@ public class EmpresaService {
 
     private final EmpresaRepository empresaRepository;
 
-    public EmpresaService(EmpresaRepository empresaRepository){
+    public EmpresaService(EmpresaRepository empresaRepository) {
         this.empresaRepository = empresaRepository;
     }
 
-   public List<EmpresaResponseDTO> findAll(){
+    public List<EmpresaResponseDTO> findAll() {
         return empresaRepository.findAll().stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
-   }
+    }
 
-   public EmpresaResponseDTO findById(Long id){
+    public EmpresaResponseDTO findById(Long id) {
         return empresaRepository.findById(id)
                 .map(this::toResponseDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
 
-   }
+    }
 
-   public EmpresaResponseDTO create(EmpresaRequestDTO dto){
+    public EmpresaResponseDTO create(EmpresaRequestDTO dto) {
 
-       Optional<Empresa> existente = empresaRepository.findByCnpj(dto.cnpj());
-       if(existente.isPresent()){
+        Optional<Empresa> existente = empresaRepository.findByCnpj(dto.cnpj());
+        if (existente.isPresent()) {
             throw new BusinessExpection("Já existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
-       }
+        }
         Empresa empresa = new Empresa();
-       BeanUtils.copyProperties(dto,empresa);
-       empresa.setCnpj(dto.cnpj().replaceAll("\\D", ""));
-       empresa.setTelefone(dto.telefone().replaceAll("\\D", ""));
-       return toResponseDTO(empresaRepository.save(empresa));
-   }
+        BeanUtils.copyProperties(dto, empresa);
+        empresa.setCnpj(dto.cnpj().replaceAll("\\D", ""));
+        empresa.setTelefone(dto.telefone().replaceAll("\\D", ""));
+        return toResponseDTO(empresaRepository.save(empresa));
+    }
 
-   public EmpresaResponseDTO update(Long id,  EmpresaRequestDTO dto){
+    public EmpresaResponseDTO update(Long id, EmpresaRequestDTO dto) {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
 
@@ -59,15 +59,15 @@ public class EmpresaService {
 
         return toResponseDTO(empresaRepository.save(empresa));
 
-   }
+    }
 
-   public void delete(Long id){
-        if(!empresaRepository.existsById(id)){
+    public void delete(Long id) {
+        if (!empresaRepository.existsById(id)) {
             throw new ResourceNotFoundException("Empresa não encontrada com ID: " + id);
         }
-   }
+    }
 
-   private EmpresaResponseDTO toResponseDTO(Empresa empresa){
+    private EmpresaResponseDTO toResponseDTO(Empresa empresa) {
         return new EmpresaResponseDTO(
                 empresa.getId(),
                 empresa.getRazaoSocial(),
@@ -78,5 +78,5 @@ public class EmpresaService {
                 empresa.getRepresentanteEmpresas(),
                 empresa.getAdocaos()
         );
-   }
+    }
 }

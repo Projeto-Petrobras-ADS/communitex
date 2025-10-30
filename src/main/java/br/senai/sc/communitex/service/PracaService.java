@@ -22,14 +22,14 @@ public class PracaService {
 
     public List<PracaResponseDTO> findAll() {
         return pracaRepository.findAll().stream()
-            .map(this::toResponseDTO)
-            .collect(Collectors.toList());
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
     public PracaResponseDTO findById(Long id) {
         return pracaRepository.findById(id)
-            .map(this::toResponseDTO)
-            .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
+                .map(this::toResponseDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
     }
 
     public PracaResponseDTO create(PracaRequestDTO dto) {
@@ -41,7 +41,7 @@ public class PracaService {
 
     public PracaResponseDTO update(Long id, PracaRequestDTO dto) {
         Praca praca = pracaRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
 
         BeanUtils.copyProperties(dto, praca);
         praca.setId(id);
@@ -58,16 +58,16 @@ public class PracaService {
 
     private PracaResponseDTO toResponseDTO(Praca praca) {
         return new PracaResponseDTO(
-            praca.getId(),
-            praca.getNome(),
-            praca.getLogradouro(),
-            praca.getBairro(),
-            praca.getCidade(),
-            praca.getLatitude(),
-            praca.getLongitude(),
-            praca.getDescricao(),
-            praca.getFotoUrl(),
-            praca.getStatus()
+                praca.getId(),
+                praca.getNome(),
+                praca.getLogradouro(),
+                praca.getBairro(),
+                praca.getCidade(),
+                praca.getLatitude(),
+                praca.getLongitude(),
+                praca.getDescricao(),
+                praca.getFotoUrl(),
+                praca.getStatus()
         );
     }
 }
