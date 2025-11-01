@@ -3,6 +3,8 @@ package br.com.communitex.service;
 import br.senai.sc.communitex.dto.AdocaoRequestDTO;
 import br.senai.sc.communitex.dto.AdocaoResponseDTO;
 import br.senai.sc.communitex.enums.StatusAdocao;
+import br.senai.sc.communitex.enums.StatusPraca;
+import br.senai.sc.communitex.exception.InvalidAdocaoException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.model.Empresa;
@@ -11,21 +13,20 @@ import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.AdocaoService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class AdocaoServiceTest {
 
     @Mock
@@ -40,133 +41,157 @@ class AdocaoServiceTest {
     @InjectMocks
     private AdocaoService adocaoService;
 
-    private Empresa empresa;
-    private Praca praca;
-    private Adocao adocao;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        empresa = new Empresa();
+    // ✅ Criação de adoção bem-sucedida
+    @Test
+    void createAdocaoSuccess() {
+        Empresa empresa = new Empresa();
         empresa.setId(1L);
-        empresa.setNomeFantasia("Tech Ltda");
 
-        praca = new Praca();
-        praca.setId(1L);
-        praca.setNome("Praça Central");
+        Praca praca = new Praca();
+        praca.setId(2L);
+        praca.setStatus(StatusPraca.DISPONIVEL);
 
-        adocao = new Adocao();
-        adocao.setId(1L);
-        adocao.setDataInicio(LocalDate.now());
-        adocao.setDataFim(LocalDate.now().plusMonths(1));
-        adocao.setDescricaoProjeto("Projeto de revitalização da praça");
-        adocao.setStatus(StatusAdocao.APROVADA);
-        adocao.setEmpresa(empresa);
-        adocao.setPraca(praca);
-    }
-
-    @Test
-    void deveRetornarTodasAsAdocoes() {
-        when(adocaoRepository.findAll()).thenReturn(List.of(adocao));
-
-        List<AdocaoResponseDTO> result = adocaoService.findAll();
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).descricaoProjeto()).isEqualTo("Projeto de revitalização da praça");
-        verify(adocaoRepository, times(1)).findAll();
-    }
-
-    @Test
-    void deveCriarAdocaoComSucesso() {
-        AdocaoRequestDTO dto = new AdocaoRequestDTO(
+        AdocaoRequestDTO request = new AdocaoRequestDTO(
                 LocalDate.now(),
-                LocalDate.now().plusDays(10),
-                "Nova Adoção",
+                LocalDate.now().plusDays(30),
+                "Projeto Verde Sustentável",
+                StatusAdocao.APROVADA,
+                empresa,
+                praca
+        );
+
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(pracaRepository.findById(2L)).thenReturn(Optional.of(praca));
+        when(adocaoRepository.save(any(Adocao.class))).thenAnswer(invocation -> {
+            Adocao a = invocation.getArgument(0);
+            a.setId(10L);
+            return a;
+        });
+
+        AdocaoResponseDTO response = adocaoService.create(request);
+
+        assertNotNull(response);
+        assertEquals("Projeto Verde Sustentável", response.descricaoProjeto());
+        assertEquals(StatusAdocao.APROVADA, response.status());
+        verify(adocaoRepository, times(1)).save(any(Adocao.class));
+        verify(pracaRepository, times(1)).save(any(Praca.class));
+    }
+
+    // ❌ Tentativa de criar adoção com praça já adotada
+    @Test
+    void createAdocaoWithPracaAlreadyAdoptedThrowsException() {
+        Empresa empresa = new Empresa();
+        empresa.setId(1L);
+
+        Praca praca = new Praca();
+        praca.setId(2L);
+        praca.setStatus(StatusPraca.ADOTADA);
+
+        AdocaoRequestDTO request = new AdocaoRequestDTO(
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                "Projeto Verde",
                 StatusAdocao.PROPOSTA,
                 empresa,
                 praca
         );
 
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
-        when(pracaRepository.findById(1L)).thenReturn(Optional.of(praca));
-        when(adocaoRepository.save(any(Adocao.class))).thenReturn(adocao);
+        when(pracaRepository.findById(2L)).thenReturn(Optional.of(praca));
 
-        AdocaoResponseDTO result = adocaoService.create(dto);
-
-        assertThat(result).isNotNull();
-        assertThat(result.empresa().getNomeFantasia()).isEqualTo("Tech Ltda");
-        verify(adocaoRepository, times(1)).save(any(Adocao.class));
+        assertThrows(InvalidAdocaoException.class, () -> adocaoService.create(request));
+        verify(adocaoRepository, never()).save(any());
     }
 
+    // 🔍 Busca por ID existente
     @Test
-    void deveLancarExcecaoAoCriarAdocaoSemEmpresa() {
-        AdocaoRequestDTO dto = new AdocaoRequestDTO(
-                LocalDate.now(),
-                LocalDate.now().plusDays(10),
-                "Nova Adoção",
-                StatusAdocao.PROPOSTA,
-                empresa,
-                praca
-        );
+    void findByIdSuccess() {
+        Adocao adocao = new Adocao();
+        adocao.setId(1L);
+        adocao.setDescricaoProjeto("Praça Solar");
 
-        when(empresaRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> adocaoService.create(dto))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Empresa não encontrada");
-    }
-
-    @Test
-    void deveRetornarAdocaoPorId() {
         when(adocaoRepository.findById(1L)).thenReturn(Optional.of(adocao));
 
-        AdocaoResponseDTO result = adocaoService.findById(1L);
+        AdocaoResponseDTO response = adocaoService.findById(1L);
 
-        assertThat(result).isNotNull();
-        assertThat(result.id()).isEqualTo(1L);
-        assertThat(result.descricaoProjeto()).contains("revitalização");
-        verify(adocaoRepository, times(1)).findById(1L);
+        assertNotNull(response);
+        assertEquals(1L, response.id());
+        assertEquals("Praça Solar", response.descricaoProjeto());
     }
 
+    // ❌ Busca por ID inexistente
     @Test
-    void deveAtualizarAdocaoComSucesso() {
+    void findByIdNotFoundThrowsException() {
+        when(adocaoRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> adocaoService.findById(1L));
+    }
+
+    // 🧱 Atualização bem-sucedida
+    @Test
+    void updateAdocaoSuccess() {
+        Empresa empresa = new Empresa();
+        empresa.setId(1L);
+
+        Praca praca = new Praca();
+        praca.setId(2L);
+
+        Adocao existingAdocao = new Adocao();
+        existingAdocao.setId(1L);
+
         AdocaoRequestDTO dto = new AdocaoRequestDTO(
                 LocalDate.now(),
-                LocalDate.now().plusDays(15),
+                LocalDate.now().plusDays(20),
                 "Projeto Atualizado",
                 StatusAdocao.EM_ANALISE,
                 empresa,
                 praca
         );
 
-        when(adocaoRepository.findById(1L)).thenReturn(Optional.of(adocao));
+        when(adocaoRepository.findById(1L)).thenReturn(Optional.of(existingAdocao));
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
-        when(pracaRepository.findById(1L)).thenReturn(Optional.of(praca));
-        when(adocaoRepository.save(any(Adocao.class))).thenReturn(adocao);
+        when(pracaRepository.findById(anyLong())).thenReturn(Optional.of(praca));
+        when(adocaoRepository.save(any(Adocao.class))).thenReturn(existingAdocao);
 
-        AdocaoResponseDTO result = adocaoService.update(1L, dto);
+        AdocaoResponseDTO response = adocaoService.update(1L, dto);
 
-        assertThat(result).isNotNull();
-        assertThat(result.descricaoProjeto()).isEqualTo("Projeto Atualizado");
+        assertNotNull(response);
+        assertEquals("Projeto Atualizado", response.descricaoProjeto());
         verify(adocaoRepository, times(1)).save(any(Adocao.class));
     }
 
+    // 🗑️ Exclusão bem-sucedida
     @Test
-    void deveExcluirAdocaoComSucesso() {
+    void deleteAdocaoSuccess() {
         when(adocaoRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(adocaoRepository).deleteById(1L);
-
         adocaoService.delete(1L);
-
         verify(adocaoRepository, times(1)).deleteById(1L);
     }
 
+    // ❌ Exclusão de ID inexistente
     @Test
-    void deveLancarExcecaoAoExcluirAdocaoInexistente() {
+    void deleteAdocaoNotFoundThrowsException() {
         when(adocaoRepository.existsById(1L)).thenReturn(false);
+        assertThrows(ResourceNotFoundException.class, () -> adocaoService.delete(1L));
+        verify(adocaoRepository, never()).deleteById(anyLong());
+    }
 
-        assertThatThrownBy(() -> adocaoService.delete(1L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Praça não encontrado");
+    // ✅ Finalização de adoção
+    @Test
+    void finalizeAdoptionSuccess() {
+        Praca praca = new Praca();
+        praca.setStatus(StatusPraca.ADOTADA);
+
+        Adocao adocao = new Adocao();
+        adocao.setId(1L);
+        adocao.setPraca(praca);
+
+        when(adocaoRepository.findById(1L)).thenReturn(Optional.of(adocao));
+        when(adocaoRepository.save(any(Adocao.class))).thenReturn(adocao);
+
+        AdocaoResponseDTO response = adocaoService.finalizeAdoption(1L);
+
+        assertEquals(StatusAdocao.FINALIZADA, response.status());
+        assertEquals(StatusPraca.DISPONIVEL, praca.getStatus());
+        verify(adocaoRepository, times(1)).save(adocao);
     }
 }

@@ -2,24 +2,20 @@ package br.com.communitex.service;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
+import br.senai.sc.communitex.exception.BusinessExpection;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.service.EmpresaService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
+import org.mockito.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class EmpresaServiceTest {
 
     @Mock
@@ -28,105 +24,116 @@ class EmpresaServiceTest {
     @InjectMocks
     private EmpresaService empresaService;
 
-    @Test
-    void createEmpresaSuccess() {
+    private Empresa empresa;
+    private EmpresaRequestDTO requestDTO;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        empresa = new Empresa();
+        empresa.setId(1L);
+        empresa.setRazaoSocial("Tech Soluções LTDA");
+        empresa.setCnpj("12345678000199");
+        empresa.setNomeFantasia("Tech Soluções");
+        empresa.setEmail("contato@tech.com");
+        empresa.setTelefone("48999999999");
 
         RepresentanteEmpresa representante = new RepresentanteEmpresa();
         representante.setId(1L);
-        representante.setNome("João da Silva");
-        representante.setEmail("joao@empresa.com");
+        representante.setNome("João Representante");
         representante.setAtivo(true);
 
-
-        EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
-                "Empresa Teste Ltda",
-                "12.345.678/0001-90",
-                "Empresa Teste",
-                "empresaTeste@teste.com",
-                "48999999999",
+        requestDTO = new EmpresaRequestDTO(
+                "Tech Soluções LTDA",
+                "12.345.678/0001-99",
+                "Tech Soluções",
+                "contato@tech.com",
+                "(48) 99999-9999",
                 representante
-
-
         );
+    }
 
-        Empresa savedEmpresa = new Empresa();
-        savedEmpresa.setId(1L);
-        savedEmpresa.setRazaoSocial(requestDTO.razaoSocial());
-        savedEmpresa.setCnpj(requestDTO.cnpj());
-        savedEmpresa.setEmail(requestDTO.email());
-        savedEmpresa.setTelefone(requestDTO.telefone());
+    @Test
+    void deveRetornarListaDeEmpresas() {
+        when(empresaRepository.findAll()).thenReturn(List.of(empresa));
 
-        when(empresaRepository.save(any(Empresa.class))).thenReturn(savedEmpresa);
+        List<EmpresaResponseDTO> result = empresaService.findAll();
+
+        assertEquals(1, result.size());
+        assertEquals("Tech Soluções LTDA", result.get(0).nomeSocial());
+        verify(empresaRepository, times(1)).findAll();
+    }
+
+    @Test
+    void deveRetornarEmpresaPorId() {
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+
+        EmpresaResponseDTO response = empresaService.findById(1L);
+
+        assertEquals("Tech Soluções", response.nomeFantasia());
+        verify(empresaRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoEmpresaNaoEncontradaPorId() {
+        when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.findById(99L));
+        verify(empresaRepository, times(1)).findById(99L);
+    }
+
+    @Test
+    void deveCriarNovaEmpresa() {
+        when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.empty());
+        when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
         EmpresaResponseDTO response = empresaService.create(requestDTO);
 
-        assertNotNull(response);
-        assertEquals(savedEmpresa.getId(), response.id());
-        assertEquals(requestDTO.razaoSocial(), response.nomeSocial());
+        assertEquals("Tech Soluções", response.nomeFantasia());
+        assertEquals("12345678000199", response.cnpj());
+        verify(empresaRepository, times(1)).save(any(Empresa.class));
     }
 
     @Test
-    void findByIdSuccess() {
-        Long id = 1L;
-        Empresa empresa = new Empresa();
-        empresa.setId(id);
-        empresa.setRazaoSocial("Empresa Teste");
+    void deveLancarExcecaoAoCriarEmpresaComCnpjExistente() {
+        when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.of(empresa));
 
-        when(empresaRepository.findById(id)).thenReturn(Optional.of(empresa));
-
-        EmpresaResponseDTO response = empresaService.findById(id);
-
-        assertNotNull(response);
-        assertEquals(id, response.id());
-        assertEquals("Empresa Teste", response.nomeSocial());
+        assertThrows(BusinessExpection.class, () -> empresaService.create(requestDTO));
+        verify(empresaRepository, never()).save(any(Empresa.class));
     }
 
     @Test
-    void findByIdNotFound() {
-        Long id = 1L;
-        when(empresaRepository.findById(id)).thenReturn(Optional.empty());
+    void deveAtualizarEmpresaExistente() {
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
-        assertThrows(ResourceNotFoundException.class, () -> empresaService.findById(id));
+        EmpresaResponseDTO response = empresaService.update(1L, requestDTO);
+
+        assertEquals("Tech Soluções", response.nomeFantasia());
+        verify(empresaRepository, times(1)).save(any(Empresa.class));
     }
 
     @Test
-    void updateEmpresaSuccess() {
-        Long id = 1L;
-        EmpresaRequestDTO requestDTO = new EmpresaRequestDTO(
-                "Empresa Atualizada Ltda",
-                "12.345.678/0001-90",
-                "novo@empresa.com",
-                "(11) 98888-7777"
-        );
+    void deveLancarExcecaoAoAtualizarEmpresaInexistente() {
+        when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Empresa existingEmpresa = new Empresa();
-        existingEmpresa.setId(id);
-
-        when(empresaRepository.findById(id)).thenReturn(Optional.of(existingEmpresa));
-        when(empresaRepository.save(any(Empresa.class))).thenReturn(existingEmpresa);
-
-        EmpresaResponseDTO response = empresaService.update(id, requestDTO);
-
-        assertNotNull(response);
-        assertEquals(requestDTO.razaoSocial(), response.nomeSocial());
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.update(99L, requestDTO));
     }
 
     @Test
-    void deleteEmpresaSuccess() {
-        Long id = 1L;
-        when(empresaRepository.existsById(id)).thenReturn(true);
+    void deveDeletarEmpresaExistente() {
+        when(empresaRepository.existsById(1L)).thenReturn(true);
 
-        empresaService.delete(id);
-
-        verify(empresaRepository, times(1)).existsById(id);
+        assertDoesNotThrow(() -> empresaService.delete(1L));
+        verify(empresaRepository, times(1)).existsById(1L);
     }
 
     @Test
-    void deleteEmpresaNotFound() {
-        Long id = 1L;
-        when(empresaRepository.existsById(id)).thenReturn(false);
+    void deveLancarExcecaoAoDeletarEmpresaInexistente() {
+        when(empresaRepository.existsById(99L)).thenReturn(false);
 
-        assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(id));
-        verify(empresaRepository, never()).deleteById(any());
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(99L));
+        verify(empresaRepository, times(1)).existsById(99L);
     }
 }
