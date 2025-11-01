@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,129 +32,183 @@ class RepresentanteEmpresaServiceTest {
     @InjectMocks
     private RepresentanteEmpresaService representanteService;
 
+    // ✅ CREATE - sucesso
     @Test
     void createRepresentanteSuccess() {
-        Empresa empresa = new Empresa(1L, "Empresa Teste", "00.000.000/0000-00",
-                "Fantasia", "email@teste.com", "(11) 99999-9999");
+        Empresa empresa = new Empresa();
+        empresa.setId(1L);
+        empresa.setNomeFantasia("Tech Soluções");
 
-        RepresentanteEmpresaRequestDTO requestDTO =
-                new RepresentanteEmpresaRequestDTO("João Silva", true, empresa.getId());
+        RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
+                "João da Silva",
+                true,
+                "joao@tech.com",
+                1L
+        );
 
-        when(empresaRepository.findById(empresa.getId())).thenReturn(Optional.of(empresa));
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenAnswer(invocation -> {
+            RepresentanteEmpresa rep = invocation.getArgument(0);
+            rep.setId(10L);
+            return rep;
+        });
 
-        RepresentanteEmpresa saved = new RepresentanteEmpresa(1L, "João Silva", true, empresa);
-        when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenReturn(saved);
-
-        RepresentanteEmpresaResponseDTO response = representanteService.create(requestDTO);
+        RepresentanteEmpresaResponseDTO response = representanteService.create(dto);
 
         assertNotNull(response);
-        assertEquals("João Silva", response.nome());
-        assertTrue(response.ativo());
-        assertEquals(empresa.getId(), response.empresaId());
+        assertEquals("João da Silva", response.nome());
+        assertEquals("Tech Soluções", response.empresaNomeFantasia());
+        verify(representanteRepository, times(1)).save(any(RepresentanteEmpresa.class));
     }
 
+    // ❌ CREATE - empresa não encontrada
     @Test
-    void createRepresentanteEmpresaNotFound() {
-        Long empresaId = 99L;
-        RepresentanteEmpresaRequestDTO dto =
-                new RepresentanteEmpresaRequestDTO("João Silva", true, empresaId);
+    void createRepresentanteEmpresaNotFoundThrowsException() {
+        RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
+                "João da Silva",
+                true,
+                "joao@tech.com",
+                99L
+        );
 
-        when(empresaRepository.findById(empresaId)).thenReturn(Optional.empty());
+        when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> representanteService.create(dto));
+        verify(representanteRepository, never()).save(any());
     }
 
+    // ✅ FIND ALL
+    @Test
+    void findAllSuccess() {
+        Empresa empresa = new Empresa();
+        empresa.setId(1L);
+        empresa.setNomeFantasia("Tech Soluções");
+
+        RepresentanteEmpresa rep = new RepresentanteEmpresa();
+        rep.setId(1L);
+        rep.setNome("João");
+        rep.setAtivo(true);
+        rep.setEmail("joao@tech.com");
+        rep.setEmpresa(empresa);
+
+        when(representanteRepository.findAll()).thenReturn(List.of(rep));
+
+        List<RepresentanteEmpresaResponseDTO> result = representanteService.findAll();
+
+        assertEquals(1, result.size());
+        assertEquals("João", result.get(0).nome());
+        verify(representanteRepository, times(1)).findAll();
+    }
+
+    // ✅ FIND BY ID - sucesso
     @Test
     void findByIdSuccess() {
-        Empresa empresa = new Empresa(1L, "Empresa Teste", "00.000.000/0000-00",
-                "Fantasia", "email@teste.com", "(11) 99999-9999");
-        RepresentanteEmpresa representante = new RepresentanteEmpresa(1L, "Maria Souza", true, empresa);
+        Empresa empresa = new Empresa();
+        empresa.setId(1L);
+        empresa.setNomeFantasia("Tech Soluções");
 
-        when(representanteRepository.findById(1L)).thenReturn(Optional.of(representante));
+        RepresentanteEmpresa rep = new RepresentanteEmpresa();
+        rep.setId(1L);
+        rep.setNome("João");
+        rep.setAtivo(true);
+        rep.setEmail("joao@tech.com");
+        rep.setEmpresa(empresa);
+
+        when(representanteRepository.findById(1L)).thenReturn(Optional.of(rep));
 
         RepresentanteEmpresaResponseDTO response = representanteService.findById(1L);
 
-        assertNotNull(response);
-        assertEquals("Maria Souza", response.nome());
-        assertEquals(empresa.getId(), response.empresaId());
+        assertEquals("João", response.nome());
+        assertEquals("Tech Soluções", response.empresaNomeFantasia());
+        verify(representanteRepository, times(1)).findById(1L);
     }
 
+    // ❌ FIND BY ID - não encontrado
     @Test
-    void findByIdNotFound() {
+    void findByIdNotFoundThrowsException() {
         when(representanteRepository.findById(1L)).thenReturn(Optional.empty());
-
         assertThrows(ResourceNotFoundException.class, () -> representanteService.findById(1L));
     }
 
+    // ✅ UPDATE - sucesso
     @Test
     void updateRepresentanteSuccess() {
-        Empresa empresa = new Empresa(1L, "Empresa Teste", "00.000.000/0000-00",
-                "Fantasia", "email@teste.com", "(11) 99999-9999");
+        Empresa empresa = new Empresa();
+        empresa.setId(1L);
+        empresa.setNomeFantasia("Tech Soluções");
 
-        RepresentanteEmpresa existing = new RepresentanteEmpresa(1L, "José", false, empresa);
-        RepresentanteEmpresaRequestDTO dto =
-                new RepresentanteEmpresaRequestDTO("José Atualizado", true, empresa.getId());
+        RepresentanteEmpresa existing = new RepresentanteEmpresa();
+        existing.setId(1L);
+        existing.setNome("Antigo");
+        existing.setAtivo(false);
+        existing.setEmail("antigo@old.com");
+        existing.setEmpresa(empresa);
+
+        RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
+                "Novo Nome",
+                true,
+                "novo@tech.com",
+                1L
+        );
 
         when(representanteRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(empresaRepository.findById(empresa.getId())).thenReturn(Optional.of(empresa));
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
         when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenReturn(existing);
 
         RepresentanteEmpresaResponseDTO response = representanteService.update(1L, dto);
 
-
-        assertNotNull(response);
-        assertEquals("José Atualizado", response.nome());
+        assertEquals("Novo Nome", response.nome());
         assertTrue(response.ativo());
+        assertEquals("novo@tech.com", response.email());
+        verify(representanteRepository, times(1)).save(any(RepresentanteEmpresa.class));
     }
 
+    // ❌ UPDATE - representante não encontrado
     @Test
-    void updateRepresentanteNotFound() {
-        RepresentanteEmpresaRequestDTO dto =
-                new RepresentanteEmpresaRequestDTO("Fulano", true, 1L);
+    void updateRepresentanteNotFoundThrowsException() {
+        RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
+                "Novo Nome",
+                true,
+                "novo@tech.com",
+                1L
+        );
 
         when(representanteRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> representanteService.update(1L, dto));
+    }
+
+    // ❌ UPDATE - empresa não encontrada
+    @Test
+    void updateEmpresaNotFoundThrowsException() {
+        RepresentanteEmpresa existing = new RepresentanteEmpresa();
+        existing.setId(1L);
+
+        RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
+                "Novo Nome",
+                true,
+                "novo@tech.com",
+                2L
+        );
+
+        when(representanteRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(empresaRepository.findById(2L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> representanteService.update(1L, dto));
     }
 
+    // ✅ DELETE - sucesso
     @Test
     void deleteRepresentanteSuccess() {
-
         when(representanteRepository.existsById(1L)).thenReturn(true);
-
-
         representanteService.delete(1L);
-
-
         verify(representanteRepository, times(1)).deleteById(1L);
     }
 
+    // ❌ DELETE - não encontrado
     @Test
-    void deleteRepresentanteNotFound() {
-
+    void deleteRepresentanteNotFoundThrowsException() {
         when(representanteRepository.existsById(1L)).thenReturn(false);
-
-
         assertThrows(ResourceNotFoundException.class, () -> representanteService.delete(1L));
-        verify(representanteRepository, never()).deleteById(any());
-    }
-
-    @Test
-    void findAllSuccess() {
-
-        Empresa empresa = new Empresa(1L, "Empresa Teste", "00.000.000/0000-00",
-                "Fantasia", "email@teste.com", "(11) 99999-9999");
-        RepresentanteEmpresa rep1 = new RepresentanteEmpresa(1L, "João", true, empresa);
-        RepresentanteEmpresa rep2 = new RepresentanteEmpresa(2L, "Maria", false, empresa);
-
-        when(representanteRepository.findAll()).thenReturn(List.of(rep1, rep2));
-
-
-        List<RepresentanteEmpresaResponseDTO> responseList = representanteService.findAll();
-
-
-        assertEquals(2, responseList.size());
-        assertEquals("João", responseList.get(0).nome());
-        assertEquals("Maria", responseList.get(1).nome());
+        verify(representanteRepository, never()).deleteById(anyLong());
     }
 }
