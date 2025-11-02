@@ -13,9 +13,9 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("CommuniTex API")
+                        .title("Communitex API")
                         .version("1.0.0")
-                        .description("API do projeto CommuniTex - Sistema de Gestão para Indústria Têxtil"));
+                        .description("API do projeto Communitex - Sistema de Gestão para adocão de praças"));
     }
 
     @Bean

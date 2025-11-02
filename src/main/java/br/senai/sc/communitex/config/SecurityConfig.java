@@ -56,7 +56,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Desabilita CSRF (não necessário para APIs stateless)
                 .authorizeHttpRequests(authorize -> authorize
                         // Permite acesso público ao endpoint de login/registro
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/swagger-ui/**", "/api-docs").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/h2-console/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/api-docs/**")
+                        .permitAll()
                         // Qualquer outra requisição deve ser autenticada
                         .anyRequest().authenticated()
                 )
