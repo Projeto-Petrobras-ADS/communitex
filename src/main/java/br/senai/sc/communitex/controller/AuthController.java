@@ -6,8 +6,8 @@ import br.senai.sc.communitex.dto.AuthResponse;
 import br.senai.sc.communitex.dto.RefreshRequest;
 import br.senai.sc.communitex.dto.RegisterRequest;
 import br.senai.sc.communitex.model.Usuario;
-import br.senai.sc.communitex.repository.UsuarioRepository;
 import br.senai.sc.communitex.service.JwtService;
+import br.senai.sc.communitex.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,18 +30,18 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
-    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioService usuarioService;
 
     public AuthController(AuthenticationManager authenticationManager,
                           UserDetailsService userDetailsService,
                           JwtService jwtService,
-                          UsuarioRepository usuarioRepository,
+                          UsuarioService usuarioService,
                           PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtService = jwtService;
-        this.usuarioRepository = usuarioRepository;
+        this.usuarioService = usuarioService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -62,11 +62,11 @@ public class AuthController {
         final String accessToken = jwtService.generateToken(userDetails);
         final String refreshToken = jwtService.generateRefreshToken(userDetails);
 
-        Usuario usuario = usuarioRepository.findByUsername(userDetails.getUsername())
+        Usuario usuario = usuarioService.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Utilizador não encontrado após autenticação"));
 
         usuario.setRefreshToken(refreshToken);
-        usuarioRepository.save(usuario);
+        usuarioService.save(usuario);
 
         return new AuthResponse(accessToken, refreshToken);
     }
@@ -76,7 +76,7 @@ public class AuthController {
     @ApiResponse(responseCode = "400", description = "Nome de usuário já existe ou dados inválidos")
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody RegisterRequest registerRequest) {
-        if (usuarioRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
+        if (usuarioService.findByUsername(registerRequest.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Erro: Nome de usuário já está em uso!");
         }
         Usuario novoUsuario = new Usuario();
@@ -89,7 +89,7 @@ public class AuthController {
         } else {
             novoUsuario.setRole("ROLE_USER");
         }
-        usuarioRepository.save(novoUsuario);
+        usuarioService.save(novoUsuario);
 
         return ResponseEntity.ok("Usuário registrado com sucesso!");
     }
@@ -102,7 +102,7 @@ public class AuthController {
         String requestRefreshToken = refreshRequest.getRefreshToken();
         String username = jwtService.extractUsername(requestRefreshToken);
 
-        Usuario usuario = usuarioRepository.findByUsername(username)
+        Usuario usuario = usuarioService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Utilizador não encontrado"));
 
         if (jwtService.isTokenValid(requestRefreshToken, usuario) &&
