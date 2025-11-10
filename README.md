@@ -2,7 +2,7 @@
 
 ## Sobre o Projeto
 
-Communitex é uma API REST desenvolvida com Spring Boot para gestão de empresas do setor têxtil, focando na administração de praças, empresas, representantes e processos de adoção.
+Communitex é uma API REST desenvolvida com Spring Boot para gestão de adoção de praça, focando na administração de praças, empresas, representantes e processos de adoção.
 
 ## Tecnologias Utilizadas
 
