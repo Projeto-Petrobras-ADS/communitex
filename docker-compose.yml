@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  meu-postgres:
+    image: postgres:16-alpine
+
+    container_name: postgres-local
+
+    environment:
+      POSTGRES_USER: devuser               # Usuário que será criado
+      POSTGRES_PASSWORD: devpass           # Senha para este usuário
+      POSTGRES_DB: communitex            # Nome do banco de dados que será criado
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local

@@ -20,7 +20,6 @@ public class Adocao {
     @Column(name = "data_fim")
     private LocalDate dataFim;
 
-    @Lob
     @Column(name = "descricao_projeto")
     private String descricaoProjeto;
 
