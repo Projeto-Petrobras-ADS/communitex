@@ -36,6 +36,43 @@ cd communitex
 mvn spring-boot:run
 ```
 
+## Como iniciar o projeto
+
+1. **Pré-requisitos**:
+   - Java 17+
+   - Maven 3.8+
+   - Docker (opcional, recomendado para ambiente local)
+
+2. **Banco de Dados com Docker**:
+   Para facilitar o setup do banco de dados PostgreSQL, utilize o Docker. Execute o comando abaixo na raiz do projeto:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   Isso irá subir um container com PostgreSQL já configurado (usuário: `devuser`, senha: `devpass`, banco: `communitex`). O banco ficará disponível na porta `5432`.
+
+3. **Configuração dos Profiles do Spring**:
+   O projeto utiliza profiles para separar configurações de ambiente. Os principais profiles são:
+
+   - `dev`: Usado para desenvolvimento local. Conecta ao banco do Docker.
+   - `prod`: Usado para produção. Requer configuração própria de banco e variáveis.
+
+   Para rodar o projeto com o profile de desenvolvimento:
+
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+
+   Ou, se preferir, pode rodar o jar diretamente:
+
+   ```bash
+   java -jar target/communitex.jar --spring.profiles.active=dev
+   ```
+
+4. **Acessando a aplicação**:
+   Após iniciar, acesse a aplicação conforme instruções do projeto (ex: http://localhost:8080).
+
 ## Documentação da API
 
 A documentação da API está disponível através do Swagger UI após iniciar a aplicação:
@@ -99,3 +136,12 @@ Credenciais padrão:
 ## Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## Observações
+
+- Certifique-se que o container do banco está rodando antes de iniciar o backend.
+- Para parar o banco de dados, execute:
+
+  ```bash
+  docker-compose down
+  ```
