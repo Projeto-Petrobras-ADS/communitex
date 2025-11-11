@@ -55,19 +55,26 @@ mvn spring-boot:run
 3. **Configuração dos Profiles do Spring**:
    O projeto utiliza profiles para separar configurações de ambiente. Os principais profiles são:
 
-   - `dev`: Usado para desenvolvimento local. Conecta ao banco do Docker.
+   - `dev`: Usado para desenvolvimento local, utiliza o banco H2 em arquivo.
+   - `local-postgres`: Usado para desenvolvimento local com PostgreSQL via Docker. Conecta ao banco do container.
    - `prod`: Usado para produção. Requer configuração própria de banco e variáveis.
 
-   Para rodar o projeto com o profile de desenvolvimento:
+   Para rodar o projeto com o profile de desenvolvimento (H2):
 
    ```bash
    mvn spring-boot:run -Dspring-boot.run.profiles=dev
    ```
 
+   Para rodar o projeto com o banco PostgreSQL via Docker:
+
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=local-postgres
+   ```
+
    Ou, se preferir, pode rodar o jar diretamente:
 
    ```bash
-   java -jar target/communitex.jar --spring.profiles.active=dev
+   java -jar target/communitex.jar --spring.profiles.active=local-postgres
    ```
 
 4. **Acessando a aplicação**:
@@ -117,13 +124,17 @@ A documentação da API está disponível através do Swagger UI após iniciar a
 
 ## Banco de Dados
 
-O projeto utiliza H2 Database em arquivo para persistência dos dados. O console do H2 pode ser acessado em:
-http://localhost:8080/h2-console
+O projeto utiliza dois bancos de dados conforme o profile selecionado:
 
-Credenciais padrão:
-- JDBC URL: jdbc:h2:file:./dados_h2
-- Username: sa
-- Password: [em branco]
+- **dev**: Utiliza H2 Database em arquivo para persistência dos dados. O console do H2 pode ser acessado em:
+  http://localhost:8080/h2-console
+
+  Credenciais padrão:
+  - JDBC URL: jdbc:h2:file:./dados_h2
+  - Username: sa
+  - Password: [em branco]
+
+- **local-postgres**: Utiliza PostgreSQL via Docker, conforme configuração do `docker-compose.yml` (usuário: `devuser`, senha: `devpass`, banco: `communitex`).
 
 ## Contribuição
 
