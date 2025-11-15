@@ -3,10 +3,17 @@ package br.senai.sc.communitex.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 import java.util.ArrayList;
@@ -52,6 +59,11 @@ public class Empresa {
     @OneToOne(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private RepresentanteEmpresa representanteEmpresas;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "usuario_representante_id")
+    @JsonIgnore
+    private Usuario usuarioRepresentante;
 
     public Empresa() {
     }
@@ -134,6 +146,14 @@ public class Empresa {
 
     public void setRepresentanteEmpresas(RepresentanteEmpresa representanteEmpresas) {
         this.representanteEmpresas = representanteEmpresas;
+    }
+
+    public Usuario getUsuarioRepresentante() {
+        return usuarioRepresentante;
+    }
+
+    public void setUsuarioRepresentante(Usuario usuarioRepresentante) {
+        this.usuarioRepresentante = usuarioRepresentante;
     }
 
 }

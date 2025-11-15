@@ -6,10 +6,12 @@ import br.senai.sc.communitex.dto.EmpresaResponseDTO;
 import br.senai.sc.communitex.exception.BusinessExpection;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
+import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
-import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,9 +21,13 @@ import java.util.stream.Collectors;
 public class EmpresaService {
 
     private final EmpresaRepository empresaRepository;
+    private final UsuarioService usuarioService;
+    private final PasswordEncoder passwordEncoder;
 
-    public EmpresaService(EmpresaRepository empresaRepository) {
+    public EmpresaService(EmpresaRepository empresaRepository, UsuarioService usuarioService, PasswordEncoder passwordEncoder) {
         this.empresaRepository = empresaRepository;
+        this.usuarioService = usuarioService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<EmpresaResponseDTO> findAll() {
@@ -37,16 +43,34 @@ public class EmpresaService {
 
     }
 
+    @Transactional
     public EmpresaResponseDTO create(EmpresaRequestDTO dto) {
 
         Optional<Empresa> existente = empresaRepository.findByCnpj(dto.cnpj());
         if (existente.isPresent()) {
             throw new BusinessExpection("Já existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
         }
+
+        // Criar e persistir o Usuario do Representante
+        Optional<Usuario> usuarioExistente = usuarioService.findByUsername(dto.emailRepresentante());
+        if (usuarioExistente.isPresent()) {
+            throw new BusinessExpection("Já existe um usuário cadastrado com o email: " + dto.emailRepresentante());
+        }
+
+        Usuario usuarioRepresentante = new Usuario();
+        usuarioRepresentante.setUsername(dto.emailRepresentante());
+        usuarioRepresentante.setPassword(passwordEncoder.encode(dto.senhaRepresentante()));
+        usuarioRepresentante.setRole("ROLE_EMPRESA");
+        usuarioRepresentante.setNome(dto.nomeRepresentante());
+        Usuario usuarioSalvo = usuarioService.save(usuarioRepresentante);
+
+        // Criar e persistir a Empresa
         Empresa empresa = new Empresa();
-        BeanUtils.copyProperties(dto, empresa);
+        BeanUtils.copyProperties(dto, empresa, "usuarioRepresentante");
         empresa.setCnpj(dto.cnpj().replaceAll("\\D", ""));
         empresa.setTelefone(dto.telefone().replaceAll("\\D", ""));
+        empresa.setUsuarioRepresentante(usuarioSalvo);
+
         return toResponseDTO(empresaRepository.save(empresa));
     }
 

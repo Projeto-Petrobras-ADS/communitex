@@ -57,7 +57,7 @@ public class EmpresaController {
     @ApiResponse(responseCode = "200", description = "Empresa atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @PutMapping("/{id}")
-    public ResponseEntity<EmpresaResponseDTO> update(@PathVariable Long id, @RequestBody EmpresaRequestDTO dto) {
+    public ResponseEntity<EmpresaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO dto) {
         return ResponseEntity.ok(empresaService.update(id, dto));
 
     }
