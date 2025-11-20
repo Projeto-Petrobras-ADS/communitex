@@ -76,16 +76,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Desabilita CSRF (não necessário para APIs stateless)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permite acesso público ao endpoint POST /api/empresas (somente POST)
                         .requestMatchers(HttpMethod.POST, "/api/empresas").permitAll()
-                        // Permite acesso público a endpoints públicos gerais
+                        .requestMatchers(HttpMethod.POST, "/api/pessoas-fisicas").permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/h2-console/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/api-docs/**").permitAll()
-                        // Qualquer outra requisição deve ser autenticada
                         .anyRequest().authenticated()
                 )
                 // Configura a política de sessão para STATELESS (sem estado)

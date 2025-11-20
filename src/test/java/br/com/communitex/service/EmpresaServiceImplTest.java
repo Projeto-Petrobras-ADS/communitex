@@ -8,7 +8,7 @@ import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
-import br.senai.sc.communitex.service.EmpresaService;
+import br.senai.sc.communitex.service.impl.EmpresaServiceImpl;
 import br.senai.sc.communitex.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class EmpresaServiceTest {
+class EmpresaServiceImplTest {
 
     @Mock
     private EmpresaRepository empresaRepository;
@@ -32,7 +32,7 @@ class EmpresaServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private EmpresaService empresaService;
+    private EmpresaServiceImpl empresaService;
 
     private Empresa empresa;
     private EmpresaRequestDTO requestDTO;

@@ -6,7 +6,7 @@ import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
-import br.senai.sc.communitex.service.PracaService;
+import br.senai.sc.communitex.service.impl.PracaServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,13 +20,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PracaServiceTest {
+class PracaServiceImplTest {
 
     @Mock
     private PracaRepository pracaRepository;
 
     @InjectMocks
-    private PracaService pracaService;
+    private PracaServiceImpl pracaServiceImpl;
 
     @Test
     void createPracaSuccess() {
@@ -34,18 +34,19 @@ class PracaServiceTest {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
             "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", StatusPraca.DISPONIVEL
+            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
         );
 
         Praca savedPraca = new Praca();
         savedPraca.setId(1L);
         savedPraca.setNome(requestDTO.nome());
-        // ... set other properties
+        // ...existing code...
+        savedPraca.setMetragemM2(requestDTO.metragemM2());
 
         when(pracaRepository.save(any(Praca.class))).thenReturn(savedPraca);
 
         // Act
-        PracaResponseDTO response = pracaService.create(requestDTO);
+        PracaResponseDTO response = pracaServiceImpl.create(requestDTO);
 
         // Assert
         assertNotNull(response);
@@ -64,7 +65,7 @@ class PracaServiceTest {
         when(pracaRepository.findById(id)).thenReturn(Optional.of(praca));
 
         // Act
-        PracaResponseDTO response = pracaService.findById(id);
+        PracaResponseDTO response = pracaServiceImpl.findById(id);
 
         // Assert
         assertNotNull(response);
@@ -78,7 +79,7 @@ class PracaServiceTest {
         when(pracaRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> pracaService.findById(id));
+        assertThrows(ResourceNotFoundException.class, () -> pracaServiceImpl.findById(id));
     }
 
     @Test
@@ -88,7 +89,7 @@ class PracaServiceTest {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Atualizada", "Rua Nova", "Bairro Novo",
             "Cidade Nova", -23.123, -46.123,
-            "Nova descrição", "http://nova-foto.jpg", StatusPraca.ADOTADA
+            "Nova descrição", "http://nova-foto.jpg", 3000.0, StatusPraca.ADOTADA
         );
 
         Praca existingPraca = new Praca();
@@ -98,7 +99,7 @@ class PracaServiceTest {
         when(pracaRepository.save(any(Praca.class))).thenReturn(existingPraca);
 
         // Act
-        PracaResponseDTO response = pracaService.update(id, requestDTO);
+        PracaResponseDTO response = pracaServiceImpl.update(id, requestDTO);
 
         // Assert
         assertNotNull(response);
@@ -112,7 +113,7 @@ class PracaServiceTest {
         when(pracaRepository.existsById(id)).thenReturn(true);
 
         // Act
-        pracaService.delete(id);
+        pracaServiceImpl.delete(id);
 
         // Assert
         verify(pracaRepository, times(1)).deleteById(id);
@@ -125,7 +126,7 @@ class PracaServiceTest {
         when(pracaRepository.existsById(id)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> pracaService.delete(id));
+        assertThrows(ResourceNotFoundException.class, () -> pracaServiceImpl.delete(id));
         verify(pracaRepository, never()).deleteById(any());
     }
 }

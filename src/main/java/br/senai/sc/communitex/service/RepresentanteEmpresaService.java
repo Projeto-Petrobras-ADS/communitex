@@ -5,7 +5,6 @@ import br.senai.sc.communitex.dto.RepresentanteEmpresaResponseDTO;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
-import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.RepresentanteEmpresaRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,17 +15,16 @@ import java.util.stream.Collectors;
 public class RepresentanteEmpresaService {
 
     private final RepresentanteEmpresaRepository representanteRepository;
-    private final EmpresaRepository empresaRepository;
+    private final EmpresaService empresaService;
 
     public RepresentanteEmpresaService(RepresentanteEmpresaRepository representanteRepository,
-                                       EmpresaRepository empresaRepository) {
+                                       EmpresaService empresaService) {
         this.representanteRepository = representanteRepository;
-        this.empresaRepository = empresaRepository;
+        this.empresaService = empresaService;
     }
 
     public RepresentanteEmpresaResponseDTO create(RepresentanteEmpresaRequestDTO dto) {
-        Empresa empresa = empresaRepository.findById(dto.empresaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + dto.empresaId()));
+        Empresa empresa = empresaService.findEntityById(dto.empresaId());
 
         RepresentanteEmpresa representante = new RepresentanteEmpresa();
         representante.setNome(dto.nome());
@@ -56,8 +54,7 @@ public class RepresentanteEmpresaService {
         RepresentanteEmpresa representante = representanteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Representante não encontrado com ID: " + id));
 
-        Empresa empresa = empresaRepository.findById(dto.empresaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + dto.empresaId()));
+        Empresa empresa = empresaService.findEntityById(dto.empresaId());
 
         representante.setNome(dto.nome());
         representante.setAtivo(dto.ativo());

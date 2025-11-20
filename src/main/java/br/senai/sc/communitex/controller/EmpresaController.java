@@ -2,7 +2,7 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
-import br.senai.sc.communitex.service.EmpresaService;
+import br.senai.sc.communitex.service.impl.EmpresaServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,9 +24,9 @@ import java.util.List;
 @RequestMapping("/api/empresas")
 @Tag(name = "Empresas", description = "Endpoints para gerenciamento de empresas")
 public class EmpresaController {
-    private final EmpresaService empresaService;
+    private final EmpresaServiceImpl empresaService;
 
-    public EmpresaController(EmpresaService empresaService) {
+    public EmpresaController(EmpresaServiceImpl empresaService) {
         this.empresaService = empresaService;
     }
 

@@ -6,6 +6,7 @@ import br.senai.sc.communitex.dto.AdocaoResponseDTO;
 import br.senai.sc.communitex.dto.AdocaoStatusResponseDTO;
 import br.senai.sc.communitex.enums.StatusAdocao;
 import br.senai.sc.communitex.enums.StatusPraca;
+import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.InvalidAdocaoException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Adocao;
@@ -14,6 +15,8 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -35,6 +38,20 @@ public class AdocaoService {
         this.pracaRepository = pracaRepository;
     }
 
+    private Empresa getEmpresaFromAuthenticatedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            username = (String) principal;
+        } else {
+            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
+        }
+
+        return empresaRepository.findByUsuarioRepresentanteUsername(username)
+                .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuário autenticado: " + username));
+    }
 
     public List<AdocaoResponseDTO> findAll() {
         return adocaoRepository.findAll()
@@ -44,11 +61,10 @@ public class AdocaoService {
     }
 
     public AdocaoResponseDTO create(AdocaoRequestDTO dto) {
-        Empresa empresa = empresaRepository.findById(dto.empresa().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + dto.empresa().getId()));
-        Praca praca = pracaRepository.findById(dto.praca().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + dto.praca().getId()));
+        Empresa empresa = getEmpresaFromAuthenticatedUser();
 
+        Praca praca = pracaRepository.findById(dto.pracaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + dto.pracaId()));
 
         if (praca.getStatus() == StatusPraca.ADOTADA) {
             throw new InvalidAdocaoException("Esta praça já está adotada por outra empresa!");
@@ -116,6 +132,11 @@ public class AdocaoService {
         return adocaos.stream().map(this::toResponseDTO).toList();
     }
 
+    public List<AdocaoResponseDTO> findByAuthenticatedUserEmpresa() {
+        Empresa empresa = getEmpresaFromAuthenticatedUser();
+        return findByEmpresa(empresa.getId());
+    }
+
     public List<AdocaoResponseDTO> findAdocoesByPrazoEStatus(Integer dias, StatusAdocao status) {
         if (dias == null || dias <= 0) {
             dias = 7;
@@ -137,17 +158,13 @@ public class AdocaoService {
         Adocao adocao = adocaoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Adoção não encontrada com ID: " + id));
 
-        Empresa empresa = empresaRepository.findById(dto.empresa().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + dto.empresa().getId()));
-
-        Praca praca = pracaRepository.findById(dto.empresa().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + dto.praca().getId()));
+        Praca praca = pracaRepository.findById(dto.pracaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + dto.pracaId()));
 
         adocao.setDataInicio(dto.dataInicio());
         adocao.setDataFim(dto.dataFim());
         adocao.setDescricaoProjeto(dto.descricaoProjeto());
         adocao.setPraca(praca);
-        adocao.setEmpresa(empresa);
 
         adocaoRepository.save(adocao);
 
@@ -172,9 +189,7 @@ public class AdocaoService {
         adocaoRepository.save(adocao);
 
         return toResponseDTO(adocao);
-
     }
-
 
     private AdocaoResponseDTO toResponseDTO(Adocao adocao) {
         return new AdocaoResponseDTO(
@@ -187,6 +202,4 @@ public class AdocaoService {
                 adocao.getPraca()
         );
     }
-
-
 }
