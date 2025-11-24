@@ -2,7 +2,6 @@ package br.senai.sc.communitex.dto;
 
 import br.senai.sc.communitex.enums.StatusPraca;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record PracaRequestDTO(
@@ -14,6 +13,7 @@ public record PracaRequestDTO(
     Double longitude,
     @Size(max = 1000) String descricao,
     String fotoUrl,
+    Double metragemM2,
     StatusPraca status
 ) {}
 

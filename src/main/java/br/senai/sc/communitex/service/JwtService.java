@@ -6,12 +6,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -37,11 +40,28 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, acessExpirationTimeMs);
+        Map<String, Object> extraClaims = new HashMap<>();
+        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+        List<String> roleStrings = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        // 4. Adiciona a lista de papéis ao mapa de claims
+        extraClaims.put("roles", roleStrings);
+
+        return buildToken(extraClaims, userDetails, acessExpirationTimeMs);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, refreshExpirationMs);
+        Map<String, Object> extraClaims = new HashMap<>();
+        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+        List<String> roleStrings = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        // 4. Adiciona a lista de papéis ao mapa de claims
+        extraClaims.put("roles", roleStrings);
+        return buildToken(extraClaims, userDetails, refreshExpirationMs);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -78,5 +98,15 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        final Claims claims = extractAllClaims(token);
+        List<String> roles = claims.get("roles", List.class);
+        if (roles == null) {
+            return List.of();
+        }
+        return roles;
     }
 }

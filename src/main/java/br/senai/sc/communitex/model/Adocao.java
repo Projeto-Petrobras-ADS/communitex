@@ -27,11 +27,11 @@ public class Adocao {
     @Column(nullable = false)
     private StatusAdocao status;
 
-
     @ManyToOne
     @JoinColumn(name = "empresa_id", nullable = false)
     @JsonIgnore
     private Empresa empresa;
+
 
     @ManyToOne
     @JoinColumn(name = "praca_id", nullable = false)
@@ -98,6 +98,7 @@ public class Adocao {
     public void setEmpresa(Empresa empresa) {
         this.empresa = empresa;
     }
+
 
     public Praca getPraca() {
         return praca;

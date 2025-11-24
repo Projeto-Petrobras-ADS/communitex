@@ -1,22 +1,19 @@
 package br.senai.sc.communitex.dto;
 
 import br.senai.sc.communitex.enums.StatusAdocao;
-import br.senai.sc.communitex.model.Empresa;
-import br.senai.sc.communitex.model.Praca;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
 public record AdocaoRequestDTO(
-        @NotBlank LocalDate dataInicio,
+        @NotNull LocalDate dataInicio,
         LocalDate dataFim,
-        @NotBlank
+        @NotNull
         @Size(max = 1000)
         String descricaoProjeto,
-        @NotBlank StatusAdocao status,
-        Empresa empresa,
-        Praca praca
+        StatusAdocao status,
+        @NotNull Long pracaId
 
         ) {
 }

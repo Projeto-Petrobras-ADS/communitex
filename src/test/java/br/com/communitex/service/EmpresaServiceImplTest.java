@@ -6,23 +6,33 @@ import br.senai.sc.communitex.exception.BusinessExpection;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
+import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
-import br.senai.sc.communitex.service.EmpresaService;
+import br.senai.sc.communitex.service.impl.EmpresaServiceImpl;
+import br.senai.sc.communitex.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class EmpresaServiceTest {
+class EmpresaServiceImplTest {
 
     @Mock
     private EmpresaRepository empresaRepository;
 
+    @Mock
+    private UsuarioService usuarioService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
-    private EmpresaService empresaService;
+    private EmpresaServiceImpl empresaService;
 
     private Empresa empresa;
     private EmpresaRequestDTO requestDTO;
@@ -50,7 +60,10 @@ class EmpresaServiceTest {
                 "Tech Soluções",
                 "contato@tech.com",
                 "(48) 99999-9999",
-                representante
+                representante,
+                "João Representante",
+                "joao@tech.com",
+                "senha123"
         );
     }
 
@@ -86,6 +99,16 @@ class EmpresaServiceTest {
     @Test
     void deveCriarNovaEmpresa() {
         when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.empty());
+        when(usuarioService.findByUsername(anyString())).thenReturn(Optional.empty());
+
+        Usuario usuarioMock = new Usuario();
+        usuarioMock.setId(1L);
+        usuarioMock.setUsername("joao@tech.com");
+        usuarioMock.setRole("ROLE_EMPRESA");
+        usuarioMock.setNome("João Representante");
+
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hashedPassword");
+        when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioMock);
         when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
         EmpresaResponseDTO response = empresaService.create(requestDTO);
@@ -93,6 +116,7 @@ class EmpresaServiceTest {
         assertEquals("Tech Soluções", response.nomeFantasia());
         assertEquals("12345678000199", response.cnpj());
         verify(empresaRepository, times(1)).save(any(Empresa.class));
+        verify(usuarioService, times(1)).save(any(Usuario.class));
     }
 
     @Test

@@ -36,6 +36,9 @@ public class Praca {
 
     private String fotoUrl;
 
+    @Column(name = "metragem_m2", nullable = false)
+    private Double metragemM2;
+
     @NotNull
     @Enumerated(EnumType.STRING)
     private StatusPraca status;
@@ -43,6 +46,11 @@ public class Praca {
     @OneToMany(mappedBy = "praca", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Adocao> adocoes = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "cadastrado_por_id")
+    @JsonIgnore
+    private PessoaFisica cadastradoPor;
 
     public Praca() {}
 
@@ -118,6 +126,14 @@ public class Praca {
         this.fotoUrl = fotoUrl;
     }
 
+    public Double getMetragemM2() {
+        return metragemM2;
+    }
+
+    public void setMetragemM2(Double metragemM2) {
+        this.metragemM2 = metragemM2;
+    }
+
     public StatusPraca getStatus() {
         return status;
     }
@@ -132,6 +148,14 @@ public class Praca {
 
     public void setAdocoes(List<Adocao> adocoes) {
         this.adocoes = adocoes;
+    }
+
+    public PessoaFisica getCadastradoPor() {
+        return cadastradoPor;
+    }
+
+    public void setCadastradoPor(PessoaFisica cadastradoPor) {
+        this.cadastradoPor = cadastradoPor;
     }
 }
 

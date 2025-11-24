@@ -12,6 +12,7 @@ public record PracaResponseDTO(
     Double longitude,
     String descricao,
     String fotoUrl,
+    Double metragemM2,
     StatusPraca status
 ) {}
 
