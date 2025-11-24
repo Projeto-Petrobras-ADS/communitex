@@ -3,6 +3,7 @@ package br.senai.sc.communitex.service.impl;
 import br.senai.sc.communitex.dto.AdocaoHistoricoDTO;
 import br.senai.sc.communitex.dto.PessoaFisicaSimpleDTO;
 import br.senai.sc.communitex.dto.PracaDetailResponseDTO;
+import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
@@ -13,6 +14,7 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.PracaService;
+import br.senai.sc.communitex.specification.PracaSpecification;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,8 +47,9 @@ public class PracaServiceImpl implements PracaService {
         return pessoaFisicaService.findByUsuarioUsername(username);
     }
 
-    public List<PracaResponseDTO> findAll() {
-        return pracaRepository.findAll().stream()
+    @Override
+    public List<PracaResponseDTO> findAll(PracaPesquisaDTO pesquisaDTO) {
+        return pracaRepository.findAll(PracaSpecification.comFiltros(pesquisaDTO)).stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }

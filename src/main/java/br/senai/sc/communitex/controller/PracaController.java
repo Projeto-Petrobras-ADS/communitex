@@ -1,6 +1,7 @@
 package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.PracaDetailResponseDTO;
+import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.service.PracaService;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,11 +34,15 @@ public class PracaController {
         this.pracaService = pracaService;
     }
 
-    @Operation(summary = "Listar todas as praças")
+    @Operation(
+        summary = "Listar todas as praças",
+        description = "Lista praças com filtros opcionais: id, nome e cidade. " +
+                      "Todos os parâmetros são opcionais e podem ser combinados."
+    )
     @ApiResponse(responseCode = "200", description = "Lista de praças retornada com sucesso")
     @GetMapping
-    public ResponseEntity<List<PracaResponseDTO>> findAll() {
-        return ResponseEntity.ok(pracaService.findAll());
+    public ResponseEntity<List<PracaResponseDTO>> findAll(@ModelAttribute PracaPesquisaDTO pesquisaDTO) {
+        return ResponseEntity.ok(pracaService.findAll(pesquisaDTO));
     }
 
     @Operation(summary = "Buscar praça por ID")

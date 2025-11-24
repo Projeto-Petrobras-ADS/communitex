@@ -1,5 +1,6 @@
 package br.senai.sc.communitex.dto;
 
+
 import br.senai.sc.communitex.enums.StatusPraca;
 
 import java.util.List;
