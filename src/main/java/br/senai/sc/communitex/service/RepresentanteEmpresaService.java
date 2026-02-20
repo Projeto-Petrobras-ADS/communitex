@@ -3,74 +3,77 @@ package br.senai.sc.communitex.service;
 import br.senai.sc.communitex.dto.RepresentanteEmpresaRequestDTO;
 import br.senai.sc.communitex.dto.RepresentanteEmpresaResponseDTO;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
-import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.repository.RepresentanteEmpresaRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class RepresentanteEmpresaService {
 
     private final RepresentanteEmpresaRepository representanteRepository;
     private final EmpresaService empresaService;
 
-    public RepresentanteEmpresaService(RepresentanteEmpresaRepository representanteRepository,
-                                       EmpresaService empresaService) {
-        this.representanteRepository = representanteRepository;
-        this.empresaService = empresaService;
-    }
-
+    @Transactional
     public RepresentanteEmpresaResponseDTO create(RepresentanteEmpresaRequestDTO dto) {
-        Empresa empresa = empresaService.findEntityById(dto.empresaId());
+        var empresa = empresaService.findEntityById(dto.empresaId());
 
-        RepresentanteEmpresa representante = new RepresentanteEmpresa();
-        representante.setNome(dto.nome());
-        representante.setAtivo(dto.ativo());
-        representante.setEmpresa(empresa);
+        var representante = RepresentanteEmpresa.builder()
+                .nome(dto.nome())
+                .ativo(dto.ativo())
+                .email(dto.email())
+                .empresa(empresa)
+                .build();
 
-        representanteRepository.save(representante);
-
-        return toResponseDTO(representante);
+        var saved = representanteRepository.save(representante);
+        log.info("Representante criado com ID: {} para empresa ID: {}", saved.getId(), empresa.getId());
+        return toResponseDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<RepresentanteEmpresaResponseDTO> findAll() {
-        return representanteRepository.findAll()
-                .stream()
+        return representanteRepository.findAll().stream()
                 .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     public RepresentanteEmpresaResponseDTO findById(Long id) {
-        RepresentanteEmpresa representante = representanteRepository.findById(id)
+        var representante = representanteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Representante não encontrado com ID: " + id));
 
         return toResponseDTO(representante);
     }
 
+    @Transactional
     public RepresentanteEmpresaResponseDTO update(Long id, RepresentanteEmpresaRequestDTO dto) {
-        RepresentanteEmpresa representante = representanteRepository.findById(id)
+        var representante = representanteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Representante não encontrado com ID: " + id));
 
-        Empresa empresa = empresaService.findEntityById(dto.empresaId());
+        var empresa = empresaService.findEntityById(dto.empresaId());
 
         representante.setNome(dto.nome());
         representante.setAtivo(dto.ativo());
         representante.setEmail(dto.email());
         representante.setEmpresa(empresa);
 
-        representanteRepository.save(representante);
-
-        return toResponseDTO(representante);
+        log.info("Representante ID: {} atualizado", id);
+        return toResponseDTO(representanteRepository.save(representante));
     }
 
+    @Transactional
     public void delete(Long id) {
         if (!representanteRepository.existsById(id)) {
             throw new ResourceNotFoundException("Representante não encontrado com ID: " + id);
         }
         representanteRepository.deleteById(id);
+        log.info("Representante ID: {} excluído", id);
     }
 
     private RepresentanteEmpresaResponseDTO toResponseDTO(RepresentanteEmpresa representante) {

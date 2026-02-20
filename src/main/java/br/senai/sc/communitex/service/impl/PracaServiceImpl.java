@@ -15,45 +15,34 @@ import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.PracaService;
 import br.senai.sc.communitex.specification.PracaSpecification;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class PracaServiceImpl implements PracaService {
+
     private final PracaRepository pracaRepository;
     private final PessoaFisicaService pessoaFisicaService;
 
-    public PracaServiceImpl(PracaRepository pracaRepository, PessoaFisicaService pessoaFisicaService) {
-        this.pracaRepository = pracaRepository;
-        this.pessoaFisicaService = pessoaFisicaService;
-    }
-
-    private PessoaFisica getPessoaFisicaFromAuthenticatedUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails) principal).getUsername();
-        } else if (principal instanceof String) {
-            username = (String) principal;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
-        return pessoaFisicaService.findByUsuarioUsername(username);
-    }
-
     @Override
+    @Transactional(readOnly = true)
     public List<PracaResponseDTO> findAll(PracaPesquisaDTO pesquisaDTO) {
         return pracaRepository.findAll(PracaSpecification.comFiltros(pesquisaDTO)).stream()
                 .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public PracaResponseDTO findById(Long id) {
         return pracaRepository.findById(id)
                 .map(this::toResponseDTO)
@@ -61,39 +50,74 @@ public class PracaServiceImpl implements PracaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PracaDetailResponseDTO findByIdWithDetails(Long id) {
-        Praca praca = pracaRepository.findById(id)
+        var praca = pracaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
 
         return toDetailResponseDTO(praca);
     }
 
+    @Override
+    @Transactional
     public PracaResponseDTO create(PracaRequestDTO dto) {
-        PessoaFisica pessoaFisica = getPessoaFisicaFromAuthenticatedUser();
+        var pessoaFisica = getPessoaFisicaFromAuthenticatedUser();
 
-        Praca praca = new Praca();
-        BeanUtils.copyProperties(dto, praca);
-        praca.setStatus(StatusPraca.DISPONIVEL);
-        praca.setCadastradoPor(pessoaFisica);
+        var praca = Praca.builder()
+                .nome(dto.nome())
+                .logradouro(dto.logradouro())
+                .bairro(dto.bairro())
+                .cidade(dto.cidade())
+                .latitude(dto.latitude())
+                .longitude(dto.longitude())
+                .descricao(dto.descricao())
+                .fotoUrl(dto.fotoUrl())
+                .metragemM2(dto.metragemM2())
+                .status(StatusPraca.DISPONIVEL)
+                .cadastradoPor(pessoaFisica)
+                .build();
 
-        return toResponseDTO(pracaRepository.save(praca));
+        var saved = pracaRepository.save(praca);
+        log.info("Praça criada com ID: {} pelo usuário: {}", saved.getId(), pessoaFisica.getNome());
+        return toResponseDTO(saved);
     }
 
+    @Override
+    @Transactional
     public PracaResponseDTO update(Long id, PracaRequestDTO dto) {
-        Praca praca = pracaRepository.findById(id)
+        var praca = pracaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
 
-        BeanUtils.copyProperties(dto, praca);
-        praca.setId(id);
+        BeanUtils.copyProperties(dto, praca, "id", "cadastradoPor", "adocoes");
 
+        log.info("Praça ID: {} atualizada", id);
         return toResponseDTO(pracaRepository.save(praca));
     }
 
+    @Override
+    @Transactional
     public void delete(Long id) {
         if (!pracaRepository.existsById(id)) {
             throw new ResourceNotFoundException("Praça não encontrada com ID: " + id);
         }
         pracaRepository.deleteById(id);
+        log.info("Praça ID: {} excluída", id);
+    }
+
+
+    private PessoaFisica getPessoaFisicaFromAuthenticatedUser() {
+        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+
+        if (principal instanceof UserDetails userDetails) {
+            username = userDetails.getUsername();
+        } else if (principal instanceof String str) {
+            username = str;
+        } else {
+            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
+        }
+
+        return pessoaFisicaService.findByUsuarioUsername(username);
     }
 
     private PracaResponseDTO toResponseDTO(Praca praca) {
@@ -114,8 +138,9 @@ public class PracaServiceImpl implements PracaService {
 
     private PracaDetailResponseDTO toDetailResponseDTO(Praca praca) {
         PessoaFisicaSimpleDTO cadastradoPorDTO = null;
-        if (praca.getCadastradoPor() != null) {
-            PessoaFisica cadastradoPor = praca.getCadastradoPor();
+        var cadastradoPor = praca.getCadastradoPor();
+
+        if (cadastradoPor != null) {
             cadastradoPorDTO = new PessoaFisicaSimpleDTO(
                     cadastradoPor.getId(),
                     cadastradoPor.getNome(),
@@ -124,13 +149,13 @@ public class PracaServiceImpl implements PracaService {
             );
         }
 
-        List<AdocaoHistoricoDTO> historico = praca.getAdocoes().stream()
+        var historico = praca.getAdocoes().stream()
                 .map(adocao -> new AdocaoHistoricoDTO(
                         adocao.getEmpresa().getId(),
                         adocao.getEmpresa().getRazaoSocial(),
                         adocao.getDescricaoProjeto()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         return new PracaDetailResponseDTO(
                 praca.getId(),
@@ -149,4 +174,3 @@ public class PracaServiceImpl implements PracaService {
         );
     }
 }
-

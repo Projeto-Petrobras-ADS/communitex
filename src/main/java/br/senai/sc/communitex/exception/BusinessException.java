@@ -3,10 +3,14 @@ package br.senai.sc.communitex.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@Deprecated(forRemoval = true)
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class BusinessExpection extends RuntimeException {
-    public BusinessExpection(String message) {
+public class BusinessException extends RuntimeException {
+
+    public BusinessException(String message) {
         super(message);
+    }
+
+    public BusinessException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

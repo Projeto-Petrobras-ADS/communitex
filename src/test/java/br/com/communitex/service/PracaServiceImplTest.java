@@ -4,14 +4,20 @@ import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
+import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.impl.PracaServiceImpl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
@@ -25,30 +31,47 @@ class PracaServiceImplTest {
     @Mock
     private PracaRepository pracaRepository;
 
+    @Mock
+    private PessoaFisicaService pessoaFisicaService;
+
     @InjectMocks
     private PracaServiceImpl pracaServiceImpl;
 
+    @BeforeEach
+    void setUp() {
+        // Setup SecurityContext mock for authenticated user
+        var authentication = new UsernamePasswordAuthenticationToken("testuser", "password");
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void createPracaSuccess() {
-        // Arrange
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
             "Cidade Teste", -23.123, -46.123,
             "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
         );
 
+        PessoaFisica pessoaFisica = new PessoaFisica();
+        pessoaFisica.setId(1L);
+        pessoaFisica.setNome("Test User");
+
         Praca savedPraca = new Praca();
         savedPraca.setId(1L);
         savedPraca.setNome(requestDTO.nome());
-        // ...existing code...
         savedPraca.setMetragemM2(requestDTO.metragemM2());
+        savedPraca.setCadastradoPor(pessoaFisica);
 
+        when(pessoaFisicaService.findByUsuarioUsername("testuser")).thenReturn(pessoaFisica);
         when(pracaRepository.save(any(Praca.class))).thenReturn(savedPraca);
 
-        // Act
         PracaResponseDTO response = pracaServiceImpl.create(requestDTO);
 
-        // Assert
         assertNotNull(response);
         assertEquals(savedPraca.getId(), response.id());
         assertEquals(requestDTO.nome(), response.nome());
@@ -56,7 +79,6 @@ class PracaServiceImplTest {
 
     @Test
     void findByIdSuccess() {
-        // Arrange
         Long id = 1L;
         Praca praca = new Praca();
         praca.setId(id);
@@ -64,27 +86,22 @@ class PracaServiceImplTest {
 
         when(pracaRepository.findById(id)).thenReturn(Optional.of(praca));
 
-        // Act
         PracaResponseDTO response = pracaServiceImpl.findById(id);
 
-        // Assert
         assertNotNull(response);
         assertEquals(id, response.id());
     }
 
     @Test
     void findByIdNotFound() {
-        // Arrange
         Long id = 1L;
         when(pracaRepository.findById(id)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> pracaServiceImpl.findById(id));
     }
 
     @Test
     void updatePracaSuccess() {
-        // Arrange
         Long id = 1L;
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Atualizada", "Rua Nova", "Bairro Novo",
@@ -94,40 +111,33 @@ class PracaServiceImplTest {
 
         Praca existingPraca = new Praca();
         existingPraca.setId(id);
+        existingPraca.setNome(requestDTO.nome());
 
         when(pracaRepository.findById(id)).thenReturn(Optional.of(existingPraca));
         when(pracaRepository.save(any(Praca.class))).thenReturn(existingPraca);
 
-        // Act
         PracaResponseDTO response = pracaServiceImpl.update(id, requestDTO);
 
-        // Assert
         assertNotNull(response);
         assertEquals(requestDTO.nome(), response.nome());
     }
 
     @Test
     void deletePracaSuccess() {
-        // Arrange
         Long id = 1L;
         when(pracaRepository.existsById(id)).thenReturn(true);
 
-        // Act
         pracaServiceImpl.delete(id);
 
-        // Assert
         verify(pracaRepository, times(1)).deleteById(id);
     }
 
     @Test
     void deletePracaNotFound() {
-        // Arrange
         Long id = 1L;
         when(pracaRepository.existsById(id)).thenReturn(false);
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> pracaServiceImpl.delete(id));
         verify(pracaRepository, never()).deleteById(any());
     }
 }
-

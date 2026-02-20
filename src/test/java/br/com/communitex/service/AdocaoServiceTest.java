@@ -19,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -38,6 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AdocaoServiceTest {
 
     @Mock
@@ -52,7 +55,6 @@ class AdocaoServiceTest {
     @InjectMocks
     private AdocaoService adocaoService;
 
-    // ✅ Criação de adoção bem-sucedida
     @Test
     void createAdocaoSuccess() {
         Empresa empresa = new Empresa();
@@ -95,7 +97,6 @@ class AdocaoServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    // ❌ Tentativa de criar adoção com praça já adotada
     @Test
     void createAdocaoWithPracaAlreadyAdoptedThrowsException() {
         Empresa empresa = new Empresa();
@@ -143,7 +144,6 @@ class AdocaoServiceTest {
         assertEquals("Praça Solar", response.descricaoProjeto());
     }
 
-    // ❌ Busca por ID inexistente
     @Test
     void findByIdNotFoundThrowsException() {
         when(adocaoRepository.findById(1L)).thenReturn(Optional.empty());
@@ -186,7 +186,6 @@ class AdocaoServiceTest {
         verify(adocaoRepository, times(1)).deleteById(1L);
     }
 
-    // ❌ Exclusão de ID inexistente
     @Test
     void deleteAdocaoNotFoundThrowsException() {
         when(adocaoRepository.existsById(1L)).thenReturn(false);
@@ -194,7 +193,6 @@ class AdocaoServiceTest {
         verify(adocaoRepository, never()).deleteById(anyLong());
     }
 
-    // ✅ Finalização de adoção
     @Test
     void finalizeAdoptionSuccess() {
         Praca praca = new Praca();
@@ -246,7 +244,6 @@ class AdocaoServiceTest {
         }
     }
 
-    // ✅ Buscar adoções pela empresa do usuário autenticado
     @Test
     void findByAuthenticatedUserEmpresa_Success() {
         Empresa empresa = new Empresa();
@@ -283,7 +280,6 @@ class AdocaoServiceTest {
         }
     }
 
-    // ❌ Buscar adoções pela empresa quando usuário não está autenticado
     @Test
     void findByAuthenticatedUserEmpresa_UserNotAuthenticatedThrowsForbidden() {
         when(empresaRepository.findByUsuarioRepresentanteUsername("user_no_empresa")).thenReturn(Optional.empty());

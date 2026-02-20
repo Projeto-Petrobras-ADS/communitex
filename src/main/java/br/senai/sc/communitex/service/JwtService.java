@@ -46,7 +46,6 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        // 4. Adiciona a lista de papéis ao mapa de claims
         extraClaims.put("roles", roleStrings);
 
         return buildToken(extraClaims, userDetails, acessExpirationTimeMs);
@@ -59,7 +58,6 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        // 4. Adiciona a lista de papéis ao mapa de claims
         extraClaims.put("roles", roleStrings);
         return buildToken(extraClaims, userDetails, refreshExpirationMs);
     }

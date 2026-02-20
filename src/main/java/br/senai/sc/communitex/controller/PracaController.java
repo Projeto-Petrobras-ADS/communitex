@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -20,19 +20,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/pracas")
+@RequiredArgsConstructor
 @Tag(name = "Praças", description = "Endpoints para gerenciamento de praças")
 public class PracaController {
-    private final PracaService pracaService;
 
-    public PracaController(PracaService pracaService) {
-        this.pracaService = pracaService;
-    }
+    private final PracaService pracaService;
 
     @Operation(
         summary = "Listar todas as praças",
@@ -41,16 +40,16 @@ public class PracaController {
     )
     @ApiResponse(responseCode = "200", description = "Lista de praças retornada com sucesso")
     @GetMapping
-    public ResponseEntity<List<PracaResponseDTO>> findAll(@ModelAttribute PracaPesquisaDTO pesquisaDTO) {
-        return ResponseEntity.ok(pracaService.findAll(pesquisaDTO));
+    public List<PracaResponseDTO> findAll(@ModelAttribute PracaPesquisaDTO pesquisaDTO) {
+        return pracaService.findAll(pesquisaDTO);
     }
 
     @Operation(summary = "Buscar praça por ID")
     @ApiResponse(responseCode = "200", description = "Praça encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Praça não encontrada")
     @GetMapping("/{id}")
-    public ResponseEntity<PracaResponseDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(pracaService.findById(id));
+    public PracaResponseDTO findById(@PathVariable Long id) {
+        return pracaService.findById(id);
     }
 
     @Operation(
@@ -60,8 +59,8 @@ public class PracaController {
     @ApiResponse(responseCode = "200", description = "Praça encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Praça não encontrada")
     @GetMapping("/{id}/detalhes")
-    public ResponseEntity<PracaDetailResponseDTO> findByIdWithDetails(@PathVariable Long id) {
-        return ResponseEntity.ok(pracaService.findByIdWithDetails(id));
+    public PracaDetailResponseDTO findByIdWithDetails(@PathVariable Long id) {
+        return pracaService.findByIdWithDetails(id);
     }
 
     @Operation(
@@ -73,24 +72,25 @@ public class PracaController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @ApiResponse(responseCode = "403", description = "Acesso negado - apenas pessoas físicas podem cadastrar praças")
     @PostMapping
-    public ResponseEntity<PracaResponseDTO> create(@Valid @RequestBody PracaRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(pracaService.create(dto));
+    @ResponseStatus(HttpStatus.CREATED)
+    public PracaResponseDTO create(@Valid @RequestBody PracaRequestDTO dto) {
+        return pracaService.create(dto);
     }
 
     @Operation(summary = "Atualizar praça existente")
     @ApiResponse(responseCode = "200", description = "Praça atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Praça não encontrada")
     @PutMapping("/{id}")
-    public ResponseEntity<PracaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody PracaRequestDTO dto) {
-        return ResponseEntity.ok(pracaService.update(id, dto));
+    public PracaResponseDTO update(@PathVariable Long id, @Valid @RequestBody PracaRequestDTO dto) {
+        return pracaService.update(id, dto);
     }
 
     @Operation(summary = "Excluir praça")
     @ApiResponse(responseCode = "204", description = "Praça excluída com sucesso")
     @ApiResponse(responseCode = "404", description = "Praça não encontrada")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         pracaService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

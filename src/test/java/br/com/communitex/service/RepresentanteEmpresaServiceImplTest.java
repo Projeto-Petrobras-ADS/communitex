@@ -5,8 +5,8 @@ import br.senai.sc.communitex.dto.RepresentanteEmpresaResponseDTO;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
-import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.RepresentanteEmpresaRepository;
+import br.senai.sc.communitex.service.EmpresaService;
 import br.senai.sc.communitex.service.RepresentanteEmpresaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,12 +27,11 @@ class RepresentanteEmpresaServiceImplTest {
     private RepresentanteEmpresaRepository representanteRepository;
 
     @Mock
-    private EmpresaRepository empresaRepository;
+    private EmpresaService empresaService;
 
     @InjectMocks
     private RepresentanteEmpresaService representanteService;
 
-    // ✅ CREATE - sucesso
     @Test
     void createRepresentanteSuccess() {
         Empresa empresa = new Empresa();
@@ -46,7 +45,7 @@ class RepresentanteEmpresaServiceImplTest {
                 1L
         );
 
-        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(empresaService.findEntityById(1L)).thenReturn(empresa);
         when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenAnswer(invocation -> {
             RepresentanteEmpresa rep = invocation.getArgument(0);
             rep.setId(10L);
@@ -61,7 +60,6 @@ class RepresentanteEmpresaServiceImplTest {
         verify(representanteRepository, times(1)).save(any(RepresentanteEmpresa.class));
     }
 
-    // ❌ CREATE - empresa não encontrada
     @Test
     void createRepresentanteEmpresaNotFoundThrowsException() {
         RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
@@ -71,13 +69,12 @@ class RepresentanteEmpresaServiceImplTest {
                 99L
         );
 
-        when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
+        when(empresaService.findEntityById(99L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada com ID: 99"));
 
         assertThrows(ResourceNotFoundException.class, () -> representanteService.create(dto));
         verify(representanteRepository, never()).save(any());
     }
 
-    // ✅ FIND ALL
     @Test
     void findAllSuccess() {
         Empresa empresa = new Empresa();
@@ -100,7 +97,6 @@ class RepresentanteEmpresaServiceImplTest {
         verify(representanteRepository, times(1)).findAll();
     }
 
-    // ✅ FIND BY ID - sucesso
     @Test
     void findByIdSuccess() {
         Empresa empresa = new Empresa();
@@ -123,14 +119,12 @@ class RepresentanteEmpresaServiceImplTest {
         verify(representanteRepository, times(1)).findById(1L);
     }
 
-    // ❌ FIND BY ID - não encontrado
     @Test
     void findByIdNotFoundThrowsException() {
         when(representanteRepository.findById(1L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> representanteService.findById(1L));
     }
 
-    // ✅ UPDATE - sucesso
     @Test
     void updateRepresentanteSuccess() {
         Empresa empresa = new Empresa();
@@ -152,7 +146,7 @@ class RepresentanteEmpresaServiceImplTest {
         );
 
         when(representanteRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(empresaService.findEntityById(1L)).thenReturn(empresa);
         when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenReturn(existing);
 
         RepresentanteEmpresaResponseDTO response = representanteService.update(1L, dto);
@@ -163,7 +157,6 @@ class RepresentanteEmpresaServiceImplTest {
         verify(representanteRepository, times(1)).save(any(RepresentanteEmpresa.class));
     }
 
-    // ❌ UPDATE - representante não encontrado
     @Test
     void updateRepresentanteNotFoundThrowsException() {
         RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
@@ -177,7 +170,6 @@ class RepresentanteEmpresaServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> representanteService.update(1L, dto));
     }
 
-    // ❌ UPDATE - empresa não encontrada
     @Test
     void updateEmpresaNotFoundThrowsException() {
         RepresentanteEmpresa existing = new RepresentanteEmpresa();
@@ -191,12 +183,11 @@ class RepresentanteEmpresaServiceImplTest {
         );
 
         when(representanteRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(empresaRepository.findById(2L)).thenReturn(Optional.empty());
+        when(empresaService.findEntityById(2L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada com ID: 2"));
 
         assertThrows(ResourceNotFoundException.class, () -> representanteService.update(1L, dto));
     }
 
-    // ✅ DELETE - sucesso
     @Test
     void deleteRepresentanteSuccess() {
         when(representanteRepository.existsById(1L)).thenReturn(true);
@@ -204,7 +195,6 @@ class RepresentanteEmpresaServiceImplTest {
         verify(representanteRepository, times(1)).deleteById(1L);
     }
 
-    // ❌ DELETE - não encontrado
     @Test
     void deleteRepresentanteNotFoundThrowsException() {
         when(representanteRepository.existsById(1L)).thenReturn(false);
