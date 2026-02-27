@@ -2,7 +2,7 @@ package br.com.communitex.service;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
-import br.senai.sc.communitex.exception.BusinessExpection;
+import br.senai.sc.communitex.exception.BusinessException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
@@ -123,7 +123,7 @@ class EmpresaServiceImplTest {
     void deveLancarExcecaoAoCriarEmpresaComCnpjExistente() {
         when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.of(empresa));
 
-        assertThrows(BusinessExpection.class, () -> empresaService.create(requestDTO));
+        assertThrows(BusinessException.class, () -> empresaService.create(requestDTO));
         verify(empresaRepository, never()).save(any(Empresa.class));
     }
 

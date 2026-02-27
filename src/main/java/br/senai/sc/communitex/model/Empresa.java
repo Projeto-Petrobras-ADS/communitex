@@ -1,10 +1,10 @@
 package br.senai.sc.communitex.model;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,12 +15,22 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "empresas")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Empresa {
 
     @Id
@@ -31,8 +41,7 @@ public class Empresa {
     private String razaoSocial;
 
     @NotBlank(message = "O campo CNPJ é obrigatório!")
-    @Pattern(regexp = "\\d{14}",
-            message = "CNPJ inválido! Use o formato 00.000.000/0000-00"    )
+    @Pattern(regexp = "\\d{14}", message = "CNPJ inválido! Use o formato 00.000.000/0000-00")
     private String cnpj;
 
     private String nomeFantasia;
@@ -41,121 +50,26 @@ public class Empresa {
     @Email(message = "Email inválido")
     private String email;
 
-
-    @Pattern(regexp = "\\d{10,11}",
-            message ="Telefone inválido! Use o formato (99) 99999-9999")
+    @Pattern(regexp = "\\d{10,11}", message = "Telefone inválido! Use o formato (99) 99999-9999")
     private String telefone;
 
-
+    @Builder.Default
     @JsonManagedReference
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<RepresentanteEmpresa> representantes = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Adocao> adocaos;
+    private List<Adocao> adocaos = new ArrayList<>();
 
     @OneToOne(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private RepresentanteEmpresa representanteEmpresas;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_representante_id")
     @JsonIgnore
     private Usuario usuarioRepresentante;
-
-    public Empresa() {
-    }
-
-    public Empresa(Long id, String razaoSocial, String cnpj, String nomeFantasia, String email, String telefone) {
-        this.id = id;
-        this.razaoSocial = razaoSocial;
-        this.cnpj = cnpj;
-        this.nomeFantasia = nomeFantasia;
-        this.email = email;
-        this.telefone = telefone;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getRazaoSocial() {
-        return razaoSocial;
-    }
-
-    public void setRazaoSocial(String razaoSocial) {
-        this.razaoSocial = razaoSocial;
-    }
-
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
-    }
-
-    public String getNomeFantasia() {
-        return nomeFantasia;
-    }
-
-    public void setNomeFantasia(String nomeFantasia) {
-        this.nomeFantasia = nomeFantasia;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public List<RepresentanteEmpresa> getRepresentantes() {
-        return representantes;
-    }
-
-    public void setRepresentantes(List<RepresentanteEmpresa> representantes) {
-        this.representantes = representantes;
-    }
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public List<Adocao> getAdocaos() {
-        return adocaos;
-    }
-
-    public void setAdocaos(List<Adocao> adocaos) {
-        this.adocaos = adocaos;
-    }
-
-    public RepresentanteEmpresa getRepresentanteEmpresas() {
-        return representanteEmpresas;
-    }
-
-    public void setRepresentanteEmpresas(RepresentanteEmpresa representanteEmpresas) {
-        this.representanteEmpresas = representanteEmpresas;
-    }
-
-    public Usuario getUsuarioRepresentante() {
-        return usuarioRepresentante;
-    }
-
-    public void setUsuarioRepresentante(Usuario usuarioRepresentante) {
-        this.usuarioRepresentante = usuarioRepresentante;
-    }
-
 }
-
-

@@ -9,27 +9,25 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/adocao")
+@RequiredArgsConstructor
 @Tag(name = "Adoções", description = "Endpoints para gerenciamento de adoções de praças")
 public class AdocaoController {
 
     private final IAdocaoService adocaoService;
-
-    public AdocaoController(IAdocaoService adocaoService) {
-        this.adocaoService = adocaoService;
-    }
 
     @Operation(
         summary = "Registrar interesse de adoção",
@@ -43,10 +41,10 @@ public class AdocaoController {
     @ApiResponse(responseCode = "403", description = "Acesso negado - apenas empresas podem registrar interesse")
     @PreAuthorize("hasRole('EMPRESA')")
     @PostMapping("/interesse")
-    public ResponseEntity<InteresseAdocaoResponseDTO> registrarInteresse(
+    @ResponseStatus(HttpStatus.CREATED)
+    public InteresseAdocaoResponseDTO registrarInteresse(
             @Valid @RequestBody InteresseAdocaoRequestDTO requestDTO) {
-        InteresseAdocaoResponseDTO response = adocaoService.registrarInteresse(requestDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return adocaoService.registrarInteresse(requestDTO);
     }
 
     @Operation(
@@ -59,9 +57,7 @@ public class AdocaoController {
     @ApiResponse(responseCode = "403", description = "Acesso negado - apenas empresas podem visualizar suas propostas")
     @PreAuthorize("hasRole('EMPRESA')")
     @GetMapping("/minhas-propostas")
-    public ResponseEntity<List<PropostaEmpresaDTO>> listarMinhasPropostas() {
-        List<PropostaEmpresaDTO> propostas = adocaoService.listarPropostasMinhasEmpresa();
-        return ResponseEntity.ok(propostas);
+    public List<PropostaEmpresaDTO> listarMinhasPropostas() {
+        return adocaoService.listarPropostasMinhasEmpresa();
     }
 }
-
