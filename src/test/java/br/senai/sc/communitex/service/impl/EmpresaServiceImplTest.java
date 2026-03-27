@@ -1,4 +1,4 @@
-package br.com.communitex.service;
+package br.senai.sc.communitex.service.impl;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
@@ -8,18 +8,24 @@ import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
-import br.senai.sc.communitex.service.impl.EmpresaServiceImpl;
 import br.senai.sc.communitex.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class EmpresaServiceImplTest {
 
     @Mock
@@ -39,8 +45,6 @@ class EmpresaServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-
         empresa = new Empresa();
         empresa.setId(1L);
         empresa.setRazaoSocial("Tech Soluções LTDA");
@@ -128,6 +132,15 @@ class EmpresaServiceImplTest {
     }
 
     @Test
+    void givenEmailRepresentanteExistente_whenCreate_thenLancaBusinessException() {
+        when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.empty());
+        when(usuarioService.findByUsername(anyString())).thenReturn(Optional.of(new Usuario()));
+
+        assertThrows(BusinessException.class, () -> empresaService.create(requestDTO));
+        verify(empresaRepository, never()).save(any(Empresa.class));
+    }
+
+    @Test
     void givenEmpresaExistente_whenUpdate_thenAtualizaEmpresa() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
         when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
@@ -150,7 +163,7 @@ class EmpresaServiceImplTest {
         when(empresaRepository.existsById(1L)).thenReturn(true);
 
         assertDoesNotThrow(() -> empresaService.delete(1L));
-        verify(empresaRepository, times(1)).existsById(1L);
+        verify(empresaRepository, times(1)).deleteById(1L);
     }
 
     @Test
@@ -160,4 +173,23 @@ class EmpresaServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(99L));
         verify(empresaRepository, times(1)).existsById(99L);
     }
+
+    @Test
+    void givenEmpresaExistente_whenFindEntityById_thenRetornaEntity() {
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+
+        Empresa result = empresaService.findEntityById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Tech Soluções LTDA", result.getRazaoSocial());
+    }
+
+    @Test
+    void givenEmpresaInexistente_whenFindEntityById_thenLancaResourceNotFoundException() {
+        when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.findEntityById(99L));
+    }
 }
+

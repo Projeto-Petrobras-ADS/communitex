@@ -1,4 +1,4 @@
-package br.com.communitex.service;
+package br.senai.sc.communitex.service.impl;
 
 import br.senai.sc.communitex.dto.RepresentanteEmpresaRequestDTO;
 import br.senai.sc.communitex.dto.RepresentanteEmpresaResponseDTO;
@@ -171,7 +171,7 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void givenEmpresaInexistente_whenUpdate_thenLancaResourceNotFoundException() {
+    void givenEmpresaInexistenteAoAtualizar_whenUpdate_thenLancaResourceNotFoundException() {
         RepresentanteEmpresa existing = new RepresentanteEmpresa();
         existing.setId(1L);
 
@@ -191,14 +191,17 @@ class RepresentanteEmpresaServiceImplTest {
     @Test
     void givenRepresentanteExistente_whenDelete_thenRemoveRepresentante() {
         when(representanteRepository.existsById(1L)).thenReturn(true);
-        representanteService.delete(1L);
+
+        assertDoesNotThrow(() -> representanteService.delete(1L));
         verify(representanteRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void givenRepresentanteInexistente_whenDelete_thenLancaResourceNotFoundException() {
         when(representanteRepository.existsById(1L)).thenReturn(false);
+
         assertThrows(ResourceNotFoundException.class, () -> representanteService.delete(1L));
-        verify(representanteRepository, never()).deleteById(anyLong());
+        verify(representanteRepository, never()).deleteById(any());
     }
 }
+
