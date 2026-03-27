@@ -12,8 +12,9 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
-import br.senai.sc.communitex.service.EmailService;
+import br.senai.sc.communitex.enums.NotificationChannel;
 import br.senai.sc.communitex.service.IAdocaoService;
+import br.senai.sc.communitex.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,7 +33,7 @@ public class AdocaoServiceImpl implements IAdocaoService {
     private final AdocaoRepository adocaoRepository;
     private final PracaRepository pracaRepository;
     private final EmpresaRepository empresaRepository;
-    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -63,7 +64,7 @@ public class AdocaoServiceImpl implements IAdocaoService {
 
         var adocaoSalva = adocaoRepository.save(adocao);
 
-        emailService.enviarNotificacaoInteresse(responsavel, empresa, praca, requestDTO.proposta());
+        notificationService.notificarInteresseAdocao(responsavel, empresa, praca, requestDTO.proposta(), NotificationChannel.EMAIL);
 
         log.info("Interesse de adoção registrado com sucesso - ID: {}", adocaoSalva.getId());
 

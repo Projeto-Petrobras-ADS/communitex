@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class CommunitexApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void givenApplicationContext_whenStart_thenLoadsSuccessfully() {
 	}
 
 }
