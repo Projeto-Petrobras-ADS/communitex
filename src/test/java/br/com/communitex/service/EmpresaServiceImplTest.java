@@ -68,7 +68,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveRetornarListaDeEmpresas() {
+    void givenEmpresasCadastradas_whenFindAll_thenRetornaLista() {
         when(empresaRepository.findAll()).thenReturn(List.of(empresa));
 
         List<EmpresaResponseDTO> result = empresaService.findAll();
@@ -79,7 +79,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveRetornarEmpresaPorId() {
+    void givenEmpresaExistente_whenFindById_thenRetornaEmpresa() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
 
         EmpresaResponseDTO response = empresaService.findById(1L);
@@ -89,7 +89,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveLancarExcecaoQuandoEmpresaNaoEncontradaPorId() {
+    void givenEmpresaInexistente_whenFindById_thenLancaResourceNotFoundException() {
         when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> empresaService.findById(99L));
@@ -97,7 +97,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveCriarNovaEmpresa() {
+    void givenDadosValidos_whenCreate_thenCriaEmpresa() {
         when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.empty());
         when(usuarioService.findByUsername(anyString())).thenReturn(Optional.empty());
 
@@ -120,7 +120,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveLancarExcecaoAoCriarEmpresaComCnpjExistente() {
+    void givenCnpjExistente_whenCreate_thenLancaBusinessException() {
         when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.of(empresa));
 
         assertThrows(BusinessException.class, () -> empresaService.create(requestDTO));
@@ -128,7 +128,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveAtualizarEmpresaExistente() {
+    void givenEmpresaExistente_whenUpdate_thenAtualizaEmpresa() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
         when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
@@ -139,14 +139,14 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveLancarExcecaoAoAtualizarEmpresaInexistente() {
+    void givenEmpresaInexistente_whenUpdate_thenLancaResourceNotFoundException() {
         when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> empresaService.update(99L, requestDTO));
     }
 
     @Test
-    void deveDeletarEmpresaExistente() {
+    void givenEmpresaExistente_whenDelete_thenRemoveEmpresa() {
         when(empresaRepository.existsById(1L)).thenReturn(true);
 
         assertDoesNotThrow(() -> empresaService.delete(1L));
@@ -154,7 +154,7 @@ class EmpresaServiceImplTest {
     }
 
     @Test
-    void deveLancarExcecaoAoDeletarEmpresaInexistente() {
+    void givenEmpresaInexistente_whenDelete_thenLancaResourceNotFoundException() {
         when(empresaRepository.existsById(99L)).thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(99L));

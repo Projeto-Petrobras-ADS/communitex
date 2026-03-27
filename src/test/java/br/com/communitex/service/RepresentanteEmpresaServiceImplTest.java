@@ -33,7 +33,7 @@ class RepresentanteEmpresaServiceImplTest {
     private RepresentanteEmpresaService representanteService;
 
     @Test
-    void createRepresentanteSuccess() {
+    void givenEmpresaExistente_whenCreate_thenCriaRepresentante() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
         empresa.setNomeFantasia("Tech Soluções");
@@ -61,7 +61,7 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void createRepresentanteEmpresaNotFoundThrowsException() {
+    void givenEmpresaInexistente_whenCreate_thenLancaResourceNotFoundException() {
         RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
                 "João da Silva",
                 true,
@@ -76,7 +76,7 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void findAllSuccess() {
+    void givenRepresentantesCadastrados_whenFindAll_thenRetornaLista() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
         empresa.setNomeFantasia("Tech Soluções");
@@ -98,7 +98,7 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void findByIdSuccess() {
+    void givenRepresentanteExistente_whenFindById_thenRetornaRepresentante() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
         empresa.setNomeFantasia("Tech Soluções");
@@ -120,13 +120,13 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void findByIdNotFoundThrowsException() {
+    void givenRepresentanteInexistente_whenFindById_thenLancaResourceNotFoundException() {
         when(representanteRepository.findById(1L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> representanteService.findById(1L));
     }
 
     @Test
-    void updateRepresentanteSuccess() {
+    void givenRepresentanteEEmpresaExistentes_whenUpdate_thenAtualizaRepresentante() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
         empresa.setNomeFantasia("Tech Soluções");
@@ -158,7 +158,7 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void updateRepresentanteNotFoundThrowsException() {
+    void givenRepresentanteInexistente_whenUpdate_thenLancaResourceNotFoundException() {
         RepresentanteEmpresaRequestDTO dto = new RepresentanteEmpresaRequestDTO(
                 "Novo Nome",
                 true,
@@ -171,7 +171,7 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void updateEmpresaNotFoundThrowsException() {
+    void givenEmpresaInexistente_whenUpdate_thenLancaResourceNotFoundException() {
         RepresentanteEmpresa existing = new RepresentanteEmpresa();
         existing.setId(1L);
 
@@ -189,14 +189,14 @@ class RepresentanteEmpresaServiceImplTest {
     }
 
     @Test
-    void deleteRepresentanteSuccess() {
+    void givenRepresentanteExistente_whenDelete_thenRemoveRepresentante() {
         when(representanteRepository.existsById(1L)).thenReturn(true);
         representanteService.delete(1L);
         verify(representanteRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void deleteRepresentanteNotFoundThrowsException() {
+    void givenRepresentanteInexistente_whenDelete_thenLancaResourceNotFoundException() {
         when(representanteRepository.existsById(1L)).thenReturn(false);
         assertThrows(ResourceNotFoundException.class, () -> representanteService.delete(1L));
         verify(representanteRepository, never()).deleteById(anyLong());

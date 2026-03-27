@@ -56,7 +56,7 @@ class AdocaoServiceTest {
     private AdocaoService adocaoService;
 
     @Test
-    void createAdocaoSuccess() {
+    void givenEmpresaEPracaDisponivel_whenCreate_thenCriaAdocao() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
 
@@ -98,7 +98,7 @@ class AdocaoServiceTest {
     }
 
     @Test
-    void createAdocaoWithPracaAlreadyAdoptedThrowsException() {
+    void givenPracaAdotada_whenCreate_thenLancaInvalidAdocaoException() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
 
@@ -130,7 +130,7 @@ class AdocaoServiceTest {
 
     // 🔍 Busca por ID existente
     @Test
-    void findByIdSuccess() {
+    void givenAdocaoExistente_whenFindById_thenRetornaAdocao() {
         Adocao adocao = new Adocao();
         adocao.setId(1L);
         adocao.setDescricaoProjeto("Praça Solar");
@@ -145,14 +145,14 @@ class AdocaoServiceTest {
     }
 
     @Test
-    void findByIdNotFoundThrowsException() {
+    void givenAdocaoInexistente_whenFindById_thenLancaResourceNotFoundException() {
         when(adocaoRepository.findById(1L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> adocaoService.findById(1L));
     }
 
     // 🧱 Atualização bem-sucedida
     @Test
-    void updateAdocaoSuccess() {
+    void givenAdocaoExistente_whenUpdate_thenAtualizaAdocao() {
         Praca praca = new Praca();
         praca.setId(2L);
 
@@ -180,21 +180,21 @@ class AdocaoServiceTest {
 
     // 🗑️ Exclusão bem-sucedida
     @Test
-    void deleteAdocaoSuccess() {
+    void givenAdocaoExistente_whenDelete_thenRemoveAdocao() {
         when(adocaoRepository.existsById(1L)).thenReturn(true);
         adocaoService.delete(1L);
         verify(adocaoRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void deleteAdocaoNotFoundThrowsException() {
+    void givenAdocaoInexistente_whenDelete_thenLancaResourceNotFoundException() {
         when(adocaoRepository.existsById(1L)).thenReturn(false);
         assertThrows(ResourceNotFoundException.class, () -> adocaoService.delete(1L));
         verify(adocaoRepository, never()).deleteById(anyLong());
     }
 
     @Test
-    void finalizeAdoptionSuccess() {
+    void givenAdocaoExistente_whenFinalizeAdoption_thenFinalizaAdocao() {
         Praca praca = new Praca();
         praca.setStatus(StatusPraca.ADOTADA);
 
@@ -214,7 +214,7 @@ class AdocaoServiceTest {
 
     // 🔒 Usuário autenticado sem empresa deve receber 403 Forbidden
     @Test
-    void createAdocao_UserWithoutEmpresa_ThrowsForbidden() {
+    void givenUsuarioSemEmpresa_whenCreate_thenLancaForbiddenException() {
         // preparar praca existente
         Praca praca = new Praca();
         praca.setId(5L);
@@ -245,7 +245,7 @@ class AdocaoServiceTest {
     }
 
     @Test
-    void findByAuthenticatedUserEmpresa_Success() {
+    void givenUsuarioComEmpresa_whenFindByAuthenticatedUserEmpresa_thenRetornaLista() {
         Empresa empresa = new Empresa();
         empresa.setId(1L);
         empresa.setNomeFantasia("Empresa Test");
@@ -281,7 +281,7 @@ class AdocaoServiceTest {
     }
 
     @Test
-    void findByAuthenticatedUserEmpresa_UserNotAuthenticatedThrowsForbidden() {
+    void givenUsuarioSemEmpresa_whenFindByAuthenticatedUserEmpresa_thenLancaForbiddenException() {
         when(empresaRepository.findByUsuarioRepresentanteUsername("user_no_empresa")).thenReturn(Optional.empty());
 
         Authentication auth = mock(Authentication.class);

@@ -50,7 +50,7 @@ class PracaServiceImplTest {
     }
 
     @Test
-    void createPracaSuccess() {
+    void givenUsuarioAutenticado_whenCreate_thenCriaPraca() {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
             "Cidade Teste", -23.123, -46.123,
@@ -78,7 +78,7 @@ class PracaServiceImplTest {
     }
 
     @Test
-    void findByIdSuccess() {
+    void givenPracaExistente_whenFindById_thenRetornaPraca() {
         Long id = 1L;
         Praca praca = new Praca();
         praca.setId(id);
@@ -93,7 +93,7 @@ class PracaServiceImplTest {
     }
 
     @Test
-    void findByIdNotFound() {
+    void givenPracaInexistente_whenFindById_thenLancaResourceNotFoundException() {
         Long id = 1L;
         when(pracaRepository.findById(id)).thenReturn(Optional.empty());
 
@@ -101,7 +101,7 @@ class PracaServiceImplTest {
     }
 
     @Test
-    void updatePracaSuccess() {
+    void givenPracaExistente_whenUpdate_thenAtualizaPraca() {
         Long id = 1L;
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Atualizada", "Rua Nova", "Bairro Novo",
@@ -123,7 +123,7 @@ class PracaServiceImplTest {
     }
 
     @Test
-    void deletePracaSuccess() {
+    void givenPracaExistente_whenDelete_thenRemovePraca() {
         Long id = 1L;
         when(pracaRepository.existsById(id)).thenReturn(true);
 
@@ -133,7 +133,7 @@ class PracaServiceImplTest {
     }
 
     @Test
-    void deletePracaNotFound() {
+    void givenPracaInexistente_whenDelete_thenLancaResourceNotFoundException() {
         Long id = 1L;
         when(pracaRepository.existsById(id)).thenReturn(false);
 
