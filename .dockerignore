@@ -1,0 +1,39 @@
+# Arquivos de build e IDEs
+target/
+.mvn/wrapper/maven-wrapper.jar
+*.class
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache/
+.factorypath
+.apt_generated/
+
+# Banco H2 local
+*.mv.db
+*.h2.db
+*.trace.db
+data/
+
+# Git e CI
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Documentação
+README.md
+HELP.md
+
+# Docker (evita recursão)
+Dockerfile
+.dockerignore
+docker-compose.yml
