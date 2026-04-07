@@ -83,7 +83,8 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/api-docs/**").permitAll()
+                                "/api-docs/**",
+                                "/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
