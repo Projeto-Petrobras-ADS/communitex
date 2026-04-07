@@ -45,7 +45,7 @@ services:
       DB_URL: jdbc:postgresql://meu-postgres:5432/communitex
       DB_USERNAME: devuser
       DB_PASSWORD: devpass
-      JWT_SECRET: ""                        # OBRIGATÓRIO: defina uma chave Base64 segura (ex: openssl rand -base64 64)
+      JWT_SECRET: "dGhpcyBpcyBhIHZlcnkgbG9uZyBhbmQgc2VjdXJlIGpzb24gd2ViIHRva2VuIHNlY3JldCBrZXkgZm9yIEhTMjU2IGFsZ29yaXRobQ=="                        # OBRIGATÓRIO: defina uma chave Base64 segura (ex: openssl rand -base64 64)
       JWT_EXPIRATION: 3600000
       JWT_REFRESH_EXPIRATION: 604800000
       RABBITMQ_HOST: rabbitmq
@@ -57,6 +57,23 @@ services:
     depends_on:
       meu-postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  communitex-notifications:
+    image: mursilva/communitex-notifications:latest
+    container_name: communitex-notifications
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      MAIL_USERNAME: 76e0530b9988ef
+      MAIL_PASSWORD: b69366be4d77a7
+
+    depends_on:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
