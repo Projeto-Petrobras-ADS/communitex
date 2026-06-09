@@ -4,6 +4,8 @@
 
 Communitex é uma API REST desenvolvida com Spring Boot 3 para gestão de adoção de praças e denúncias comunitárias. O sistema permite que cidadãos cadastrem praças, registrem problemas urbanos (denúncias), interajam com outras denúncias e que empresas manifestem interesse em adotar praças públicas.
 
+![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Projeto-Petrobras-ADS/communitex/badges/coverage.json)
+
 ## Tecnologias Utilizadas
 
 - Java 21
