@@ -1,0 +1,42 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+  # Opcional: Roda a análise toda semana na madrugada de domingo, mesmo sem commits novos
+  schedule:
+    - cron: '0 3 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    
+    # Permissões necessárias para que o robô consiga salvar os alertas na aba de Segurança
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Inicializar o CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          # Para projetos Java/Kotlin, a tag oficial do CodeQL agora é 'java-kotlin'
+          languages: 'java-kotlin'
+          # Usa as regras padrão de segurança. Se quiser ser mais rigoroso, troque para 'security-extended'
+          queries: security-and-quality
+
+      - name: Compilação Automática (Autobuild)
+        # O CodeQL tentará adivinhar os comandos de build do seu projeto (ex: mvn clean package)
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Executar a Análise do CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java-kotlin"
