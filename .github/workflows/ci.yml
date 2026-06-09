@@ -14,5 +14,34 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
         
-      - name: Compilar e testar
+      - name: Configurar o Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # Altere para a versão que você utiliza (ex: 11, 21)
+          distribution: 'temurin'
+          
+      - name: Compilar e rodar testes
         run: mvn clean verify
+        
+      - name: Gerar Badge de Cobertura
+        id: jacoco
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          generate-branches-badge: true
+          jacoco-csv-file: target/site/jacoco/jacoco.csv
+          badges-directory: .github/badges
+          
+      - name: Fazer commit do badge gerado
+        # Só fazemos o commit se for push na main/develop. Em PRs, apenas geramos para teste.
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          cd .github/badges
+          if [[ `git status --porcelain` ]]; then
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            git add *.svg
+            git commit -m "chore: atualiza badge de cobertura [skip ci]"
+            git push
+          else
+            echo "Nenhuma mudança na cobertura de testes."
+          fi
