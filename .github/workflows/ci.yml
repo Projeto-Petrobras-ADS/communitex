@@ -1,10 +1,6 @@
-    # ----------------------------------------------------------------
-    # 🚀 SALVAR O BADGE NA BRANCH SEPARADA
-    # ----------------------------------------------------------------
-    - name: Fazer Deploy do Badge para a branch 'badges'
+- name: Fazer Deploy do Badge para a branch 'badges'
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         branch: badges
         folder: .github/badges
-        git-config-name: github-actions[bot]
-        git-config-email: github-actions[bot]@users.noreply.github.com
+        token: ${{ secrets.COMPANION_TOKEN }}
