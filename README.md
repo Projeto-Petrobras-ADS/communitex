@@ -6,6 +6,9 @@ Communitex é uma API REST desenvolvida com Spring Boot 3 para gestão de adoç�
 
 [![CI/CD Pipeline](https://github.com/Projeto-Petrobras-ADS/communitex/actions/workflows/ci.yml/badge.svg)](https://github.com/Projeto-Petrobras-ADS/communitex/actions/workflows/ci.yml)
 
+![Coverage](.github/badges/jacoco.svg)
+![Branches](.github/badges/branches.svg)
+
 ## Tecnologias Utilizadas
 
 - Java 21
