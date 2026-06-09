@@ -24,6 +24,13 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      - name: Configurar o Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
       - name: Inicializar o CodeQL
         uses: github/codeql-action/init@v3
         with:
