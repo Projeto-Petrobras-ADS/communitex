@@ -1,6 +1,25 @@
-- name: Fazer Deploy do Badge para a branch 'badges'
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        branch: badges
-        folder: .github/badges
-        token: ${{ secrets.COMPANION_TOKEN }}
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Compilar e testar
+        run: mvn clean verify
+      
+      - name: Fazer Deploy do Badge para a branch 'badges'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: badges
+          folder: .github/badges
+          token: ${{ secrets.COMPANION_TOKEN }}
