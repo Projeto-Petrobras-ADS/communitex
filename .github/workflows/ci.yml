@@ -17,6 +17,15 @@ jobs:
       - name: Compilar e testar
         run: mvn clean verify
       
+      - name: Gerar badges
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('.github/badges')) {
+              fs.mkdirSync('.github/badges', { recursive: true });
+            }
+      
       - name: Fazer Deploy do Badge para a branch 'badges'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
