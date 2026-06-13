@@ -30,7 +30,15 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
         @Param("statusResolvidos") List<IssueStatus> statusResolvidos
     );
 
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findByAutorId(Long autorId);
+
+    long countByAutorId(Long autorId);
+
+    long countByAutorIdAndStatus(Long autorId, IssueStatus status);
+
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findTop5ByAutorIdOrderByDataCriacaoDesc(Long autorId);
 
     List<Denuncia> findByStatus(IssueStatus status);
 

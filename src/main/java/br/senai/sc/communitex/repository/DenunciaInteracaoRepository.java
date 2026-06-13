@@ -15,6 +15,8 @@ public interface DenunciaInteracaoRepository extends JpaRepository<DenunciaInter
 
     long countByIssueIdAndTipo(Long issueId, InteractionType tipo);
 
+    long countByUsuarioIdAndTipo(Long usuarioId, InteractionType tipo);
+
     Optional<DenunciaInteracao> findByIssueIdAndUsuarioIdAndTipo(Long issueId, Long usuarioId, InteractionType tipo);
 
     @Query("SELECT i FROM DenunciaInteracao i WHERE i.issue.id = :issueId AND i.tipo = 'COMENTARIO' ORDER BY i.dataCriacao DESC")
