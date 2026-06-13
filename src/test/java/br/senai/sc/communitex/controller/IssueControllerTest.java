@@ -1,16 +1,17 @@
 package br.senai.sc.communitex.controller;
 
-import br.senai.sc.communitex.dto.IssueInteractionRequestDTO;
-import br.senai.sc.communitex.dto.IssueInteractionResponseDTO;
-import br.senai.sc.communitex.dto.IssueRequestDTO;
-import br.senai.sc.communitex.dto.IssueResponseDTO;
+import br.senai.sc.communitex.dto.DenunciaInteracaoRequestDTO;
+import br.senai.sc.communitex.dto.DenunciaInteracaoResponseDTO;
+import br.senai.sc.communitex.dto.DenunciaRequestDTO;
+import br.senai.sc.communitex.dto.IssueStatusUpdateRequest;
+import br.senai.sc.communitex.dto.DenunciaResponseDTO;
 import br.senai.sc.communitex.enums.InteractionType;
 import br.senai.sc.communitex.enums.IssueStatus;
 import br.senai.sc.communitex.enums.IssueType;
 import br.senai.sc.communitex.exception.DuplicateIssueException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.service.JwtService;
-import br.senai.sc.communitex.service.IssueService;
+import br.senai.sc.communitex.service.DenunciaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(IssueController.class)
+@WebMvcTest(DenunciaController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class IssueControllerTest {
 
@@ -44,15 +45,15 @@ class IssueControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private IssueService issueService;
+    private DenunciaService issueService;
 
     @MockitoBean
     private JwtService jwtService;
 
     @Test
-    void givenValidIssueRequest_whenCreate_thenReturnsCreated() throws Exception {
-        var request = new IssueRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, null, IssueType.BURACO);
-        var response = new IssueResponseDTO(
+        void dadoPedidoValidoAoCriar_deveRetornarCriado() throws Exception {
+        var request = new DenunciaRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, null, IssueType.BURACO);
+        var response = new DenunciaResponseDTO(
                 1L,
                 "Buraco",
                 "Buraco perigoso",
@@ -68,7 +69,7 @@ class IssueControllerTest {
                 0
         );
 
-        when(issueService.create(any(IssueRequestDTO.class))).thenReturn(response);
+        when(issueService.criar(any(DenunciaRequestDTO.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/issues")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,7 +80,7 @@ class IssueControllerTest {
     }
 
     @Test
-    void givenInvalidIssueRequest_whenCreate_thenReturnsBadRequest() throws Exception {
+        void dadoPedidoInvalidoAoCriar_deveRetornarBadRequest() throws Exception {
         var invalidPayload = """
                 {
                   "titulo": "",
@@ -98,10 +99,10 @@ class IssueControllerTest {
     }
 
     @Test
-    void givenDuplicateIssue_whenCreate_thenReturnsConflict() throws Exception {
-        var request = new IssueRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, null, IssueType.BURACO);
+        void dadaDenunciaDuplicadaAoCriar_deveRetornarConflict() throws Exception {
+        var request = new DenunciaRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, null, IssueType.BURACO);
 
-        when(issueService.create(any(IssueRequestDTO.class)))
+        when(issueService.criar(any(DenunciaRequestDTO.class)))
                 .thenThrow(new DuplicateIssueException("Já existe denúncia similar"));
 
         mockMvc.perform(post("/api/issues")
@@ -112,8 +113,8 @@ class IssueControllerTest {
     }
 
     @Test
-    void givenIssueInexistente_whenFindById_thenReturnsNotFound() throws Exception {
-        when(issueService.findById(99L)).thenThrow(new ResourceNotFoundException("Denúncia não encontrada"));
+        void dadaDenunciaInexistenteAoBuscarPorId_deveRetornarNotFound() throws Exception {
+        when(issueService.buscarPorId(99L)).thenThrow(new ResourceNotFoundException("Denúncia não encontrada"));
 
         mockMvc.perform(get("/api/issues/{id}", 99L))
                 .andExpect(status().isNotFound())
@@ -121,9 +122,9 @@ class IssueControllerTest {
     }
 
     @Test
-    void givenValidInteraction_whenAddInteraction_thenReturnsCreated() throws Exception {
-        var request = new IssueInteractionRequestDTO(InteractionType.COMENTARIO, "Concordo com a denúncia");
-        var response = new IssueInteractionResponseDTO(
+        void dadaInteracaoValidaAoAdicionar_deveRetornarCriado() throws Exception {
+        var request = new DenunciaInteracaoRequestDTO(InteractionType.COMENTARIO, "Concordo com a denúncia");
+        var response = new DenunciaInteracaoResponseDTO(
                 20L,
                 InteractionType.COMENTARIO,
                 "Concordo com a denúncia",
@@ -132,7 +133,7 @@ class IssueControllerTest {
                 "Murilo"
         );
 
-        when(issueService.addInteraction(eq(1L), any(IssueInteractionRequestDTO.class))).thenReturn(response);
+        when(issueService.adicionarInteracao(eq(1L), any(DenunciaInteracaoRequestDTO.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/issues/{id}/interacoes", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,16 +143,16 @@ class IssueControllerTest {
     }
 
     @Test
-    void givenExistingInteraction_whenRemoveInteraction_thenReturnsNoContent() throws Exception {
-        doNothing().when(issueService).removeInteraction(1L, 2L);
+        void dadaInteracaoExistenteAoRemover_deveRetornarNoContent() throws Exception {
+        doNothing().when(issueService).removerInteracao(1L, 2L);
 
         mockMvc.perform(delete("/api/issues/{issueId}/interacoes/{interactionId}", 1L, 2L))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    void givenValidStatus_whenUpdateStatus_thenReturnsOk() throws Exception {
-        var response = new IssueResponseDTO(
+        void dadoStatusValidoAoAtualizar_deveRetornarOk() throws Exception {
+        var response = new DenunciaResponseDTO(
                 1L,
                 "Buraco",
                 "Buraco perigoso",
@@ -167,7 +168,7 @@ class IssueControllerTest {
                 1
         );
 
-        when(issueService.updateStatus(1L, "EM_ANALISE")).thenReturn(response);
+        when(issueService.atualizarStatus(1L, IssueStatus.EM_ANALISE)).thenReturn(response);
 
         mockMvc.perform(patch("/api/issues/{id}/status", 1L)
                         .contentType(MediaType.APPLICATION_JSON)

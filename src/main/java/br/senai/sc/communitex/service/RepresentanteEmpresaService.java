@@ -18,11 +18,11 @@ import java.util.List;
 public class RepresentanteEmpresaService {
 
     private final RepresentanteEmpresaRepository representanteRepository;
-    private final EmpresaService empresaService;
+    private final listarTodas empresaService;
 
     @Transactional
     public RepresentanteEmpresaResponseDTO create(RepresentanteEmpresaRequestDTO dto) {
-        var empresa = empresaService.findEntityById(dto.empresaId());
+        var empresa = empresaService.buscarEntidadePorId(dto.empresaId());
 
         var representante = RepresentanteEmpresa.builder()
                 .nome(dto.nome())
@@ -56,7 +56,7 @@ public class RepresentanteEmpresaService {
         var representante = representanteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Representante não encontrado com ID: " + id));
 
-        var empresa = empresaService.findEntityById(dto.empresaId());
+        var empresa = empresaService.buscarEntidadePorId(dto.empresaId());
 
         representante.setNome(dto.nome());
         representante.setAtivo(dto.ativo());

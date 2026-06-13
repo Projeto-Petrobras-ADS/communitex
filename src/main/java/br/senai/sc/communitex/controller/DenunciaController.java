@@ -1,11 +1,12 @@
 package br.senai.sc.communitex.controller;
 
-import br.senai.sc.communitex.dto.IssueDetailResponseDTO;
-import br.senai.sc.communitex.dto.IssueInteractionRequestDTO;
-import br.senai.sc.communitex.dto.IssueInteractionResponseDTO;
-import br.senai.sc.communitex.dto.IssueRequestDTO;
-import br.senai.sc.communitex.dto.IssueResponseDTO;
-import br.senai.sc.communitex.service.IssueService;
+import br.senai.sc.communitex.dto.DenunciaDetailResponseDTO;
+import br.senai.sc.communitex.dto.DenunciaInteracaoRequestDTO;
+import br.senai.sc.communitex.dto.DenunciaInteracaoResponseDTO;
+import br.senai.sc.communitex.dto.DenunciaRequestDTO;
+import br.senai.sc.communitex.dto.IssueStatusUpdateRequest;
+import br.senai.sc.communitex.dto.DenunciaResponseDTO;
+import br.senai.sc.communitex.service.DenunciaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,15 +27,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/issues")
 @RequiredArgsConstructor
 @Tag(name = "Denúncias", description = "Endpoints para gerenciamento de denúncias comunitárias")
-public class IssueController {
+public class DenunciaController {
 
-    private final IssueService issueService;
+    private final DenunciaService issueService;
 
     @Operation(
         summary = "Criar nova denúncia",
@@ -47,15 +47,15 @@ public class IssueController {
     @ApiResponse(responseCode = "409", description = "Já existe uma denúncia similar próxima")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public IssueResponseDTO create(@Valid @RequestBody IssueRequestDTO dto) {
-        return issueService.create(dto);
+    public DenunciaResponseDTO create(@Valid @RequestBody DenunciaRequestDTO dto) {
+        return issueService.criar(dto);
     }
 
     @Operation(summary = "Listar todas as denúncias")
     @ApiResponse(responseCode = "200", description = "Lista de denúncias retornada com sucesso")
     @GetMapping
-    public List<IssueResponseDTO> findAll() {
-        return issueService.findAll();
+    public List<DenunciaResponseDTO> findAll() {
+        return issueService.listarTodas();
     }
 
     @Operation(
@@ -64,22 +64,22 @@ public class IssueController {
     )
     @ApiResponse(responseCode = "200", description = "Lista de denúncias próximas retornada com sucesso")
     @GetMapping("/proximidade")
-    public List<IssueResponseDTO> findByProximity(
+    public List<DenunciaResponseDTO> findByProximity(
             @Parameter(description = "Latitude do ponto de referência", required = true)
             @RequestParam Double latitude,
             @Parameter(description = "Longitude do ponto de referência", required = true)
             @RequestParam Double longitude,
             @Parameter(description = "Raio de busca em metros (padrão: 1000)")
             @RequestParam(defaultValue = "1000") Double raioMetros) {
-        return issueService.findByProximity(latitude, longitude, raioMetros);
+        return issueService.buscarPorProximidade(latitude, longitude, raioMetros);
     }
 
     @Operation(summary = "Buscar denúncia por ID")
     @ApiResponse(responseCode = "200", description = "Denúncia encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
     @GetMapping("/{id}")
-    public IssueResponseDTO findById(@PathVariable Long id) {
-        return issueService.findById(id);
+    public DenunciaResponseDTO findById(@PathVariable Long id) {
+        return issueService.buscarPorId(id);
     }
 
     @Operation(
@@ -89,8 +89,8 @@ public class IssueController {
     @ApiResponse(responseCode = "200", description = "Denúncia encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
     @GetMapping("/{id}/detalhes")
-    public IssueDetailResponseDTO findByIdWithDetails(@PathVariable Long id) {
-        return issueService.findByIdWithDetails(id);
+    public DenunciaDetailResponseDTO findByIdWithDetails(@PathVariable Long id) {
+        return issueService.buscarPorIdComDetalhes(id);
     }
 
     @Operation(
@@ -102,11 +102,10 @@ public class IssueController {
     @ApiResponse(responseCode = "400", description = "Status inválido")
     @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
     @PatchMapping("/{id}/status")
-    public IssueResponseDTO updateStatus(
+    public DenunciaResponseDTO updateStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-        var status = body.get("status");
-        return issueService.updateStatus(id, status);
+            @Valid @RequestBody IssueStatusUpdateRequest body) {
+        return issueService.atualizarStatus(id, body.status());
     }
 
     @Operation(
@@ -120,18 +119,18 @@ public class IssueController {
     @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
     @PostMapping("/{id}/interacoes")
     @ResponseStatus(HttpStatus.CREATED)
-    public IssueInteractionResponseDTO addInteraction(
+    public DenunciaInteracaoResponseDTO addInteraction(
             @PathVariable Long id,
-            @Valid @RequestBody IssueInteractionRequestDTO dto) {
-        return issueService.addInteraction(id, dto);
+            @Valid @RequestBody DenunciaInteracaoRequestDTO dto) {
+        return issueService.adicionarInteracao(id, dto);
     }
 
     @Operation(summary = "Listar interações de uma denúncia")
     @ApiResponse(responseCode = "200", description = "Lista de interações retornada com sucesso")
     @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
     @GetMapping("/{id}/interacoes")
-    public List<IssueInteractionResponseDTO> findInteractions(@PathVariable Long id) {
-        return issueService.findInteractionsByIssueId(id);
+    public List<DenunciaInteracaoResponseDTO> findInteractions(@PathVariable Long id) {
+        return issueService.listarInteracoesDaDenuncia(id);
     }
 
     @Operation(
@@ -147,6 +146,6 @@ public class IssueController {
     public void removeInteraction(
             @PathVariable Long issueId,
             @PathVariable Long interactionId) {
-        issueService.removeInteraction(issueId, interactionId);
+        issueService.removerInteracao(issueId, interactionId);
     }
 }

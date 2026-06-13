@@ -3,6 +3,8 @@ package br.senai.sc.communitex.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -54,6 +56,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler({AuthenticationException.class, AuthenticationServiceException.class})
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(RuntimeException ex) {
+        log.warn("Falha de autenticação: {}", ex.getMessage());
+        var error = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Credenciais inválidas");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
         var message = ex.getBindingResult()
@@ -73,7 +82,7 @@ public class GlobalExceptionHandler {
         log.error("Erro interno do servidor", ex);
         var error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Erro interno do servidor: " + ex.getMessage()
+            "Erro interno do servidor"
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }

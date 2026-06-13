@@ -193,7 +193,7 @@ public class AdocaoService {
             throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
         }
 
-        return empresaRepository.findByUsuarioRepresentanteUsername(username)
+        return empresaRepository.buscarPorUsuarioRepresentanteUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuário autenticado: " + username));
     }
 
@@ -212,8 +212,11 @@ public class AdocaoService {
                 adocao.getDataFim(),
                 adocao.getDescricaoProjeto(),
                 adocao.getStatus(),
-                adocao.getEmpresa(),
-                adocao.getPraca()
+                adocao.getEmpresa() != null ? adocao.getEmpresa().getId() : null,
+                adocao.getEmpresa() != null ? adocao.getEmpresa().getNomeFantasia() : null,
+                adocao.getPraca() != null ? adocao.getPraca().getId() : null,
+                adocao.getPraca() != null ? adocao.getPraca().getNome() : null,
+                adocao.getPraca() != null ? adocao.getPraca().getCidade() : null
         );
     }
 }

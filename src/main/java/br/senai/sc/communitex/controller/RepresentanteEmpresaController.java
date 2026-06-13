@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,19 +16,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/representantes")
 @Tag(name = "Representantes", description = "Endpoints para gerenciamento de representantes de empresas")
+@RequiredArgsConstructor
 public class RepresentanteEmpresaController {
 
     private final RepresentanteEmpresaService representanteService;
-
-    public RepresentanteEmpresaController(RepresentanteEmpresaService representanteService) {
-        this.representanteService = representanteService;
-    }
 
     @Operation(summary = "Criar novo representante")
     @ApiResponse(responseCode = "200", description = "Representante criado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @PostMapping
-    public ResponseEntity<RepresentanteEmpresaResponseDTO> create(@RequestBody RepresentanteEmpresaRequestDTO dto) {
+    public ResponseEntity<RepresentanteEmpresaResponseDTO> create(@Valid @RequestBody RepresentanteEmpresaRequestDTO dto) {
         return ResponseEntity.ok(representanteService.create(dto));
     }
 
@@ -51,7 +49,7 @@ public class RepresentanteEmpresaController {
     @ApiResponse(responseCode = "404", description = "Representante não encontrado")
     @PutMapping("/{id}")
     public ResponseEntity<RepresentanteEmpresaResponseDTO> update(@PathVariable Long id,
-                                                                  @RequestBody RepresentanteEmpresaRequestDTO dto) {
+                                                                  @Valid @RequestBody RepresentanteEmpresaRequestDTO dto) {
         return ResponseEntity.ok(representanteService.update(id, dto));
     }
 

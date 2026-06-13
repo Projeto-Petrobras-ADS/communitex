@@ -4,7 +4,7 @@ import br.senai.sc.communitex.enums.InteractionType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record IssueInteractionRequestDTO(
+public record DenunciaInteracaoRequestDTO(
     @NotNull(message = "O tipo de interação é obrigatório")
     InteractionType tipo,
 

@@ -1,6 +1,9 @@
 package br.senai.sc.communitex.dto;
 
-public class RefreshRequest {
-    public String refreshToken;
-    public String getRefreshToken() { return refreshToken; }
+import jakarta.validation.constraints.NotBlank;
+
+public record RefreshRequest(
+        @NotBlank(message = "O refresh token é obrigatório")
+        String refreshToken
+) {
 }

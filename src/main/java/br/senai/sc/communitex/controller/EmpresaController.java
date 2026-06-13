@@ -2,7 +2,7 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
-import br.senai.sc.communitex.service.EmpresaService;
+import br.senai.sc.communitex.service.listarTodas;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,21 +27,21 @@ import java.util.List;
 @Tag(name = "Empresas", description = "Endpoints para gerenciamento de empresas")
 public class EmpresaController {
 
-    private final EmpresaService empresaService;
+    private final listarTodas empresaService;
 
     @Operation(summary = "Listar todas as empresas")
     @ApiResponse(responseCode = "200", description = "Lista de empresas retornada com sucesso")
     @GetMapping
-    public List<EmpresaResponseDTO> findAll() {
-        return empresaService.findAll();
+    public List<EmpresaResponseDTO> listarTodas() {
+        return empresaService.listarTodas();
     }
 
     @Operation(summary = "Buscar empresa por ID")
     @ApiResponse(responseCode = "200", description = "Empresa encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @GetMapping("/{id}")
-    public EmpresaResponseDTO findById(@PathVariable Long id) {
-        return empresaService.findById(id);
+    public EmpresaResponseDTO buscarPorId(@PathVariable Long id) {
+        return empresaService.buscarPorId(id);
     }
 
     @Operation(summary = "Criar nova empresa")
@@ -49,16 +49,16 @@ public class EmpresaController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EmpresaResponseDTO create(@Valid @RequestBody EmpresaRequestDTO dto) {
-        return empresaService.create(dto);
+    public EmpresaResponseDTO criar(@Valid @RequestBody EmpresaRequestDTO dto) {
+        return empresaService.criar(dto);
     }
 
     @Operation(summary = "Atualizar empresa existente")
     @ApiResponse(responseCode = "200", description = "Empresa atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @PutMapping("/{id}")
-    public EmpresaResponseDTO update(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO dto) {
-        return empresaService.update(id, dto);
+    public EmpresaResponseDTO atualizar(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO dto) {
+        return empresaService.atualizar(id, dto);
     }
 
     @Operation(summary = "Excluir empresa")
@@ -66,7 +66,7 @@ public class EmpresaController {
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        empresaService.delete(id);
+    public void excluir(@PathVariable Long id) {
+        empresaService.excluir(id);
     }
 }

@@ -2,12 +2,16 @@ package br.senai.sc.communitex.service.impl;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
+import br.senai.sc.communitex.dto.AdocaoResponseDTO;
+import br.senai.sc.communitex.dto.RepresentanteEmpresaResponseDTO;
 import br.senai.sc.communitex.exception.BusinessException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
+import br.senai.sc.communitex.model.Adocao;
+import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
-import br.senai.sc.communitex.service.EmpresaService;
+import br.senai.sc.communitex.service.listarTodas;
 import br.senai.sc.communitex.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +25,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmpresaServiceImpl implements EmpresaService {
+public class EmpresaServiceImpl implements listarTodas {
 
     private final EmpresaRepository empresaRepository;
     private final UsuarioService usuarioService;
@@ -29,14 +33,14 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     @Override
     @Transactional(readOnly = true)
-    public Empresa findEntityById(Long id) {
+    public Empresa buscarEntidadePorId(Long id) {
         return empresaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<EmpresaResponseDTO> findAll() {
+    public List<EmpresaResponseDTO> listarTodas() {
         return empresaRepository.findAll().stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -44,7 +48,7 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     @Override
     @Transactional(readOnly = true)
-    public EmpresaResponseDTO findById(Long id) {
+    public EmpresaResponseDTO buscarPorId(Long id) {
         return empresaRepository.findById(id)
                 .map(this::toResponseDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
@@ -52,8 +56,8 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     @Override
     @Transactional
-    public EmpresaResponseDTO create(EmpresaRequestDTO dto) {
-        empresaRepository.findByCnpj(dto.cnpj())
+    public EmpresaResponseDTO criar(EmpresaRequestDTO dto) {
+        empresaRepository.buscarPorCnpj(dto.cnpj())
                 .ifPresent(existing -> {
                     throw new BusinessException("Já existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
                 });
@@ -87,7 +91,7 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     @Override
     @Transactional
-    public EmpresaResponseDTO update(Long id, EmpresaRequestDTO dto) {
+    public EmpresaResponseDTO atualizar(Long id, EmpresaRequestDTO dto) {
         var empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
 
@@ -99,7 +103,7 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     @Override
     @Transactional
-    public void delete(Long id) {
+    public void excluir(Long id) {
         if (!empresaRepository.existsById(id)) {
             throw new ResourceNotFoundException("Empresa não encontrada com ID: " + id);
         }
@@ -108,6 +112,21 @@ public class EmpresaServiceImpl implements EmpresaService {
     }
 
     private EmpresaResponseDTO toResponseDTO(Empresa empresa) {
+        RepresentanteEmpresa representante = empresa.getRepresentanteEmpresas();
+
+        var representanteDTO = representante == null ? null : new RepresentanteEmpresaResponseDTO(
+            representante.getId(),
+            representante.getNome(),
+            representante.getAtivo(),
+            representante.getEmail(),
+            empresa.getId(),
+            empresa.getNomeFantasia()
+        );
+
+        var adocoes = empresa.getAdocaos().stream()
+            .map(this::toAdocaoDTO)
+            .toList();
+
         return new EmpresaResponseDTO(
                 empresa.getId(),
                 empresa.getRazaoSocial(),
@@ -115,8 +134,25 @@ public class EmpresaServiceImpl implements EmpresaService {
                 empresa.getNomeFantasia(),
                 empresa.getEmail(),
                 empresa.getTelefone(),
-                empresa.getRepresentanteEmpresas(),
-                empresa.getAdocaos()
+            representanteDTO,
+            adocoes
         );
     }
+
+        private AdocaoResponseDTO toAdocaoDTO(Adocao adocao) {
+        var praca = adocao.getPraca();
+
+        return new AdocaoResponseDTO(
+            adocao.getId(),
+            adocao.getDataInicio(),
+            adocao.getDataFim(),
+            adocao.getDescricaoProjeto(),
+            adocao.getStatus(),
+            adocao.getEmpresa() != null ? adocao.getEmpresa().getId() : null,
+            adocao.getEmpresa() != null ? adocao.getEmpresa().getNomeFantasia() : null,
+            praca != null ? praca.getId() : null,
+            praca != null ? praca.getNome() : null,
+            praca != null ? praca.getCidade() : null
+        );
+        }
 }

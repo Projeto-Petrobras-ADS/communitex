@@ -1,6 +1,12 @@
 package br.senai.sc.communitex.dto;
 
-public class AuthRequest {
-    public String username;
-    public String password;
+import jakarta.validation.constraints.NotBlank;
+
+public record AuthRequest(
+        @NotBlank(message = "O username é obrigatório")
+        String username,
+
+        @NotBlank(message = "A senha é obrigatória")
+        String password
+) {
 }

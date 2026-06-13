@@ -6,7 +6,7 @@ import br.senai.sc.communitex.model.Empresa;
 
 import java.util.List;
 
-public interface EmpresaService {
+public interface listarTodas {
 
     Empresa buscarEntidadePorId(Long id);
 

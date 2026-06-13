@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,9 +57,7 @@ class AuthControllerTest {
 
     @Test
     void givenValidCredentials_whenLogin_thenReturnsTokens() throws Exception {
-        var request = new AuthRequest();
-        request.username = "murilo@communitex.com";
-        request.password = "senha123";
+                var request = new AuthRequest("murilo@communitex.com", "senha123");
 
         var user = new Usuario();
         user.setId(1L);
@@ -67,11 +66,11 @@ class AuthControllerTest {
         user.setRole("ROLE_USER");
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(new UsernamePasswordAuthenticationToken(request.username, request.password));
-        when(userDetailsService.loadUserByUsername(request.username)).thenReturn(user);
+                .thenReturn(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        when(userDetailsService.loadUserByUsername(request.username())).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("access-token");
         when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
-        when(usuarioService.findByUsername(request.username)).thenReturn(Optional.of(user));
+        when(usuarioService.findByUsername(request.username())).thenReturn(Optional.of(user));
         when(usuarioService.save(user)).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/login")
@@ -84,25 +83,21 @@ class AuthControllerTest {
 
     @Test
     void givenInvalidCredentials_whenLogin_thenReturnsInternalServerError() throws Exception {
-        var request = new AuthRequest();
-        request.username = "murilo@communitex.com";
-        request.password = "errada";
+        var request = new AuthRequest("murilo@communitex.com", "errada");
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Bad credentials"));
+                .thenThrow(new BadCredentialsException("Bad credentials"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
     }
 
     @Test
     void givenExistingUsername_whenRegister_thenReturnsBadRequest() throws Exception {
-        var request = new RegisterRequest();
-        request.setUsername("murilo@communitex.com");
-        request.setPassword("senha123");
+                var request = new RegisterRequest("murilo@communitex.com", "senha123", null);
 
         when(usuarioService.findByUsername("murilo@communitex.com")).thenReturn(Optional.of(new Usuario()));
 
@@ -115,10 +110,7 @@ class AuthControllerTest {
 
     @Test
     void givenNewUsername_whenRegister_thenReturnsOk() throws Exception {
-        var request = new RegisterRequest();
-        request.setUsername("novo@communitex.com");
-        request.setPassword("senha123");
-        request.setRole("ADMIN");
+                var request = new RegisterRequest("novo@communitex.com", "senha123", "ADMIN");
 
         when(usuarioService.findByUsername("novo@communitex.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("senha123")).thenReturn("senha-hash");
@@ -132,8 +124,7 @@ class AuthControllerTest {
 
     @Test
     void givenValidRefreshToken_whenRefresh_thenReturnsNewAccessToken() throws Exception {
-        var refreshRequest = new RefreshRequest();
-        refreshRequest.refreshToken = "refresh-token";
+                var refreshRequest = new RefreshRequest("refresh-token");
 
         var user = new Usuario();
         user.setUsername("murilo@communitex.com");
@@ -156,8 +147,7 @@ class AuthControllerTest {
 
     @Test
     void givenInvalidRefreshToken_whenRefresh_thenReturnsInternalServerError() throws Exception {
-        var refreshRequest = new RefreshRequest();
-        refreshRequest.refreshToken = "refresh-invalido";
+                var refreshRequest = new RefreshRequest("refresh-invalido");
 
         var user = new Usuario();
         user.setUsername("murilo@communitex.com");
@@ -172,8 +162,8 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(refreshRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
     }
 }
 

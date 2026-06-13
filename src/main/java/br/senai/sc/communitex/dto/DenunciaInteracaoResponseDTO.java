@@ -4,7 +4,7 @@ import br.senai.sc.communitex.enums.InteractionType;
 
 import java.time.LocalDateTime;
 
-public record IssueInteractionResponseDTO(
+public record DenunciaInteracaoResponseDTO(
     Long id,
     InteractionType tipo,
     String conteudo,

@@ -2,11 +2,12 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.PessoaFisicaRequestDTO;
 import br.senai.sc.communitex.dto.PessoaFisicaResponseDTO;
-import br.senai.sc.communitex.service.impl.PessoaFisicaServiceImpl;
+import br.senai.sc.communitex.service.PessoaFisicaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,18 +24,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pessoas-fisicas")
 @Tag(name = "Pessoas Físicas", description = "Endpoints para gerenciamento de pessoas físicas")
+@RequiredArgsConstructor
 public class PessoaFisicaController {
-    private final PessoaFisicaServiceImpl pessoaFisicaServiceImpl;
 
-    public PessoaFisicaController(PessoaFisicaServiceImpl pessoaFisicaServiceImpl) {
-        this.pessoaFisicaServiceImpl = pessoaFisicaServiceImpl;
-    }
+    private final PessoaFisicaService pessoaFisicaService;
 
     @Operation(summary = "Listar todas as pessoas físicas")
     @ApiResponse(responseCode = "200", description = "Lista de pessoas físicas retornada com sucesso")
     @GetMapping
     public ResponseEntity<List<PessoaFisicaResponseDTO>> findAll() {
-        return ResponseEntity.ok(pessoaFisicaServiceImpl.findAll());
+        return ResponseEntity.ok(pessoaFisicaService.findAll());
     }
 
     @Operation(summary = "Buscar pessoa física por ID")
@@ -42,7 +41,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "404", description = "Pessoa física não encontrada")
     @GetMapping("/{id}")
     public ResponseEntity<PessoaFisicaResponseDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(pessoaFisicaServiceImpl.findById(id));
+        return ResponseEntity.ok(pessoaFisicaService.findById(id));
     }
 
     @Operation(summary = "Criar nova pessoa física")
@@ -50,7 +49,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @PostMapping
     public ResponseEntity<PessoaFisicaResponseDTO> create(@Valid @RequestBody PessoaFisicaRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(pessoaFisicaServiceImpl.create(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(pessoaFisicaService.create(dto));
     }
 
     @Operation(summary = "Atualizar pessoa física existente")
@@ -58,7 +57,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "404", description = "Pessoa física não encontrada")
     @PutMapping("/{id}")
     public ResponseEntity<PessoaFisicaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody PessoaFisicaRequestDTO dto) {
-        return ResponseEntity.ok(pessoaFisicaServiceImpl.update(id, dto));
+        return ResponseEntity.ok(pessoaFisicaService.update(id, dto));
     }
 
     @Operation(summary = "Excluir pessoa física")
@@ -66,7 +65,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "404", description = "Pessoa física não encontrada")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        pessoaFisicaServiceImpl.delete(id);
+        pessoaFisicaService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

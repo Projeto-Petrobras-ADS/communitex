@@ -4,8 +4,9 @@ import br.senai.sc.communitex.enums.IssueStatus;
 import br.senai.sc.communitex.enums.IssueType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-public record IssueResponseDTO(
+public record DenunciaDetailResponseDTO(
     Long id,
     String titulo,
     String descricao,
@@ -17,7 +18,8 @@ public record IssueResponseDTO(
     LocalDateTime dataCriacao,
     Long autorId,
     String autorNome,
-    int totalInteracoes,
-    int totalApoios
+    int totalApoios,
+    int totalCurtidas,
+    List<DenunciaInteracaoResponseDTO> interacoes
 ) {}
 

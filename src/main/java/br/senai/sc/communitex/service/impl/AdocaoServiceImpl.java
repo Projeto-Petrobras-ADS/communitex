@@ -100,7 +100,7 @@ public class AdocaoServiceImpl implements IAdocaoService {
             throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
         }
 
-        return empresaRepository.findByUsuarioRepresentanteUsername(username)
+        return empresaRepository.buscarPorUsuarioRepresentanteUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuário autenticado: " + username));
     }
 
