@@ -31,6 +31,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -257,7 +258,9 @@ class IssueServiceImplTest {
         var perto = issue(1L, "Perto", -27.5969, -48.5495, autor, IssueStatus.ABERTA);
         var longe = issue(2L, "Longe", -27.7000, -48.7000, autor, IssueStatus.ABERTA);
 
-        when(issueRepository.findAll()).thenReturn(List.of(perto, longe));
+        when(issueRepository.findByLatitudeBetweenAndLongitudeBetween(
+                anyDouble(), anyDouble(), anyDouble(), anyDouble()
+        )).thenReturn(List.of(perto, longe));
 
         var issues = issueService.buscarPorProximidade(-27.5969, -48.5495, 100.0);
 

@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -211,6 +212,30 @@ class PracaServiceImplTest {
 
         assertThrows(ResourceNotFoundException.class, () -> pracaService.delete(id));
         verify(pracaRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void givenImagemValida_whenUpdateFoto_thenSalvaConteudoNoBanco() {
+        var praca = new Praca();
+        praca.setId(1L);
+        var arquivo = new MockMultipartFile("arquivo", "praca.png", "image/png", new byte[]{1, 2, 3});
+        when(pracaRepository.findById(1L)).thenReturn(Optional.of(praca));
+
+        pracaService.updateFoto(1L, arquivo);
+
+        assertEquals("image/png", praca.getFotoContentType());
+        assertEquals("praca.png", praca.getFotoNomeOriginal());
+        assertEquals(3, praca.getFoto().length);
+        verify(pracaRepository).save(praca);
+    }
+
+    @Test
+    void givenImagemComFormatoInvalido_whenUpdateFoto_thenRejeitaArquivo() {
+        var arquivo = new MockMultipartFile("arquivo", "arquivo.txt", "text/plain", new byte[]{1});
+
+        assertThrows(br.senai.sc.communitex.exception.BusinessException.class,
+                () -> pracaService.updateFoto(1L, arquivo));
+        verify(pracaRepository, never()).findById(any());
     }
 }
 

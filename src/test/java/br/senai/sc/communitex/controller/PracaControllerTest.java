@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,14 +47,14 @@ class PracaControllerTest {
 
     @Test
     void givenPracasCadastradas_whenFindAll_thenReturnsOk() throws Exception {
-        when(pracaService.findAll(any())).thenReturn(List.of(
+        when(pracaService.findAll(any(), any())).thenReturn(new PageImpl<>(List.of(
                 new PracaResponseDTO(1L, "Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", null, 1000.0, StatusPraca.DISPONIVEL)
-        ));
+        )));
 
         mockMvc.perform(get("/api/pracas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].nome").value("Praca Central"));
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].nome").value("Praca Central"));
     }
 
     @Test

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,7 @@ public class PessoaFisicaController {
     @Operation(summary = "Listar todas as pessoas físicas")
     @ApiResponse(responseCode = "200", description = "Lista de pessoas físicas retornada com sucesso")
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<PessoaFisicaResponseDTO>> findAll() {
         return ResponseEntity.ok(pessoaFisicaService.findAll());
     }
@@ -40,6 +42,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "200", description = "Pessoa física encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Pessoa física não encontrada")
     @GetMapping("/{id}")
+    @PreAuthorize("@authz.isPessoaFisicaOwnerOrAdmin(#id)")
     public ResponseEntity<PessoaFisicaResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(pessoaFisicaService.findById(id));
     }
@@ -56,6 +59,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "200", description = "Pessoa física atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Pessoa física não encontrada")
     @PutMapping("/{id}")
+    @PreAuthorize("@authz.isPessoaFisicaOwnerOrAdmin(#id)")
     public ResponseEntity<PessoaFisicaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody PessoaFisicaRequestDTO dto) {
         return ResponseEntity.ok(pessoaFisicaService.update(id, dto));
     }
@@ -64,6 +68,7 @@ public class PessoaFisicaController {
     @ApiResponse(responseCode = "204", description = "Pessoa física excluída com sucesso")
     @ApiResponse(responseCode = "404", description = "Pessoa física não encontrada")
     @DeleteMapping("/{id}")
+    @PreAuthorize("@authz.isPessoaFisicaOwnerOrAdmin(#id)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         pessoaFisicaService.delete(id);
         return ResponseEntity.noContent().build();

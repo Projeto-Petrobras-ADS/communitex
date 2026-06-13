@@ -11,7 +11,7 @@ import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
-import br.senai.sc.communitex.service.listarTodas;
+import br.senai.sc.communitex.service.EmpresaService;
 import br.senai.sc.communitex.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmpresaServiceImpl implements listarTodas {
+public class EmpresaServiceImpl implements EmpresaService {
 
     private final EmpresaRepository empresaRepository;
     private final UsuarioService usuarioService;
@@ -81,6 +81,13 @@ public class EmpresaServiceImpl implements listarTodas {
                 .nomeFantasia(dto.nomeFantasia())
                 .email(dto.email())
                 .telefone(dto.telefone() != null ? dto.telefone().replaceAll("\\D", "") : null)
+                .cep(dto.cep() != null ? dto.cep().replaceAll("\\D", "") : null)
+                .logradouro(dto.logradouro())
+                .numero(dto.numero())
+                .complemento(dto.complemento())
+                .bairro(dto.bairro())
+                .cidade(dto.cidade())
+                .estado(dto.estado() != null ? dto.estado().toUpperCase() : null)
                 .usuarioRepresentante(usuarioSalvo)
                 .build();
 
@@ -134,6 +141,13 @@ public class EmpresaServiceImpl implements listarTodas {
                 empresa.getNomeFantasia(),
                 empresa.getEmail(),
                 empresa.getTelefone(),
+                empresa.getCep(),
+                empresa.getLogradouro(),
+                empresa.getNumero(),
+                empresa.getComplemento(),
+                empresa.getBairro(),
+                empresa.getCidade(),
+                empresa.getEstado(),
             representanteDTO,
             adocoes
         );

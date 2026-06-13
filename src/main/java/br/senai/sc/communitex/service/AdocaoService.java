@@ -156,6 +156,19 @@ public class AdocaoService {
     }
 
     @Transactional
+    public AdocaoResponseDTO updateStatus(Long id, StatusAdocao status) {
+        var adocao = adocaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("AdoÃ§Ã£o nÃ£o encontrada com ID: " + id));
+
+        adocao.setStatus(status);
+        atualizarStatusPraca(adocao.getPraca(), status);
+        pracaRepository.save(adocao.getPraca());
+
+        log.info("Status da adoÃ§Ã£o ID: {} atualizado para: {}", id, status);
+        return toResponseDTO(adocaoRepository.save(adocao));
+    }
+
+    @Transactional
     public void delete(Long id) {
         if (!adocaoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Adoção não encontrada com ID: " + id);

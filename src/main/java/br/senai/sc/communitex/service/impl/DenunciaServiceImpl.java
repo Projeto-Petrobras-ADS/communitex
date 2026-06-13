@@ -21,6 +21,8 @@ import br.senai.sc.communitex.repository.UsuarioRepository;
 import br.senai.sc.communitex.service.DenunciaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -88,8 +90,26 @@ public class DenunciaServiceImpl implements DenunciaService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<DenunciaResponseDTO> listarTodas(Pageable pageable) {
+        return issueRepository.findAll(pageable)
+                .map(this::toResponseDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<DenunciaResponseDTO> buscarPorProximidade(Double latitude, Double longitude, Double radiusMeters) {
-        return issueRepository.findAll().stream()
+        validarBuscaPorProximidade(latitude, longitude, radiusMeters);
+
+        var latitudeDelta = radiusMeters / 111_320.0;
+        var longitudeScale = Math.max(Math.cos(Math.toRadians(latitude)), 0.01);
+        var longitudeDelta = radiusMeters / (111_320.0 * longitudeScale);
+
+        return issueRepository.findByLatitudeBetweenAndLongitudeBetween(
+                        latitude - latitudeDelta,
+                        latitude + latitudeDelta,
+                        longitude - longitudeDelta,
+                        longitude + longitudeDelta
+                ).stream()
             .filter(issue -> calcularDistanciaHaversine(
                         latitude, longitude,
                         issue.getLatitude(), issue.getLongitude()) <= radiusMeters)
@@ -187,6 +207,18 @@ public class DenunciaServiceImpl implements DenunciaService {
         var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return EARTH_RADIUS_METERS * c;
+    }
+
+    private void validarBuscaPorProximidade(Double latitude, Double longitude, Double radiusMeters) {
+        if (latitude == null || latitude < -90 || latitude > 90) {
+            throw new BusinessException("Latitude inválida");
+        }
+        if (longitude == null || longitude < -180 || longitude > 180) {
+            throw new BusinessException("Longitude inválida");
+        }
+        if (radiusMeters == null || radiusMeters <= 0 || radiusMeters > 50_000) {
+            throw new BusinessException("O raio deve estar entre 1 e 50000 metros");
+        }
     }
 
     private Denuncia buscarDenunciaPorId(Long id) {

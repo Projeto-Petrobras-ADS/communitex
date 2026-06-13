@@ -47,6 +47,16 @@ public class Praca {
 
     private String fotoUrl;
 
+    @Column(name = "foto")
+    @JsonIgnore
+    private byte[] foto;
+
+    @Column(name = "foto_content_type", length = 100)
+    private String fotoContentType;
+
+    @Column(name = "foto_nome_original", length = 255)
+    private String fotoNomeOriginal;
+
     @Column(name = "metragem_m2", nullable = false)
     private Double metragemM2;
 

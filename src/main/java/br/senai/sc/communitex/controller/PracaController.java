@@ -11,7 +11,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -22,7 +28,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 
 @RestController
@@ -40,8 +49,8 @@ public class PracaController {
     )
     @ApiResponse(responseCode = "200", description = "Lista de praças retornada com sucesso")
     @GetMapping
-    public List<PracaResponseDTO> findAll(@ModelAttribute PracaPesquisaDTO pesquisaDTO) {
-        return pracaService.findAll(pesquisaDTO);
+    public Page<PracaResponseDTO> findAll(@ModelAttribute PracaPesquisaDTO pesquisaDTO, Pageable pageable) {
+        return pracaService.findAll(pesquisaDTO, pageable);
     }
 
     @Operation(summary = "Buscar praça por ID")
@@ -81,8 +90,28 @@ public class PracaController {
     @ApiResponse(responseCode = "200", description = "Praça atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Praça não encontrada")
     @PutMapping("/{id}")
+    @PreAuthorize("@authz.isPracaOwnerOrAdmin(#id)")
     public PracaResponseDTO update(@PathVariable Long id, @Valid @RequestBody PracaRequestDTO dto) {
         return pracaService.update(id, dto);
+    }
+
+    @Operation(summary = "Enviar ou substituir a foto da praca")
+    @PutMapping(value = "/{id}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("@authz.isPracaOwnerOrAdmin(#id)")
+    public void updateFoto(@PathVariable Long id, @RequestParam("arquivo") MultipartFile arquivo) {
+        pracaService.updateFoto(id, arquivo);
+    }
+
+    @Operation(summary = "Exibir a foto da praca")
+    @GetMapping("/{id}/foto")
+    public ResponseEntity<byte[]> findFoto(@PathVariable Long id) {
+        var foto = pracaService.findFoto(id);
+        var contentType = foto.contentType() == null ? MediaType.APPLICATION_OCTET_STREAM : MediaType.parseMediaType(foto.contentType());
+        return ResponseEntity.ok()
+                .contentType(contentType)
+                .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic())
+                .body(foto.conteudo());
     }
 
     @Operation(summary = "Excluir praça")
@@ -90,6 +119,7 @@ public class PracaController {
     @ApiResponse(responseCode = "404", description = "Praça não encontrada")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("@authz.isPracaOwnerOrAdmin(#id)")
     public void delete(@PathVariable Long id) {
         pracaService.delete(id);
     }

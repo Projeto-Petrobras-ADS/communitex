@@ -6,7 +6,9 @@ import br.senai.sc.communitex.dto.PracaDetailResponseDTO;
 import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
+import br.senai.sc.communitex.dto.PracaFotoDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
+import br.senai.sc.communitex.exception.BusinessException;
 import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.PessoaFisica;
@@ -18,17 +20,25 @@ import br.senai.sc.communitex.specification.PracaSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Set;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PracaServiceImpl implements PracaService {
+
+    private static final long MAX_FOTO_SIZE = 5 * 1024 * 1024;
+    private static final Set<String> FOTO_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final PracaRepository pracaRepository;
     private final PessoaFisicaService pessoaFisicaService;
@@ -39,6 +49,13 @@ public class PracaServiceImpl implements PracaService {
         return pracaRepository.findAll(PracaSpecification.comFiltros(pesquisaDTO)).stream()
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PracaResponseDTO> findAll(PracaPesquisaDTO pesquisaDTO, Pageable pageable) {
+        return pracaRepository.findAll(PracaSpecification.comFiltros(pesquisaDTO), pageable)
+                .map(this::toResponseDTO);
     }
 
     @Override
@@ -88,10 +105,40 @@ public class PracaServiceImpl implements PracaService {
         var praca = pracaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
 
-        BeanUtils.copyProperties(dto, praca, "id", "cadastradoPor", "adocoes");
+        BeanUtils.copyProperties(dto, praca, "id", "status", "cadastradoPor", "adocoes");
 
         log.info("Praça ID: {} atualizada", id);
         return toResponseDTO(pracaRepository.save(praca));
+    }
+
+    @Override
+    @Transactional
+    public void updateFoto(Long id, MultipartFile arquivo) {
+        validarFoto(arquivo);
+        var praca = pracaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Praca nao encontrada com ID: " + id));
+
+        try {
+            praca.setFoto(arquivo.getBytes());
+            praca.setFotoContentType(arquivo.getContentType());
+            praca.setFotoNomeOriginal(arquivo.getOriginalFilename());
+            praca.setFotoUrl(null);
+            pracaRepository.save(praca);
+        } catch (IOException ex) {
+            throw new BusinessException("Nao foi possivel processar a imagem enviada", ex);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PracaFotoDTO findFoto(Long id) {
+        var praca = pracaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Praca nao encontrada com ID: " + id));
+
+        if (praca.getFoto() == null || praca.getFoto().length == 0) {
+            throw new ResourceNotFoundException("A praca nao possui foto cadastrada");
+        }
+        return new PracaFotoDTO(praca.getFoto(), praca.getFotoContentType(), praca.getFotoNomeOriginal());
     }
 
     @Override
@@ -130,7 +177,7 @@ public class PracaServiceImpl implements PracaService {
                 praca.getLatitude(),
                 praca.getLongitude(),
                 praca.getDescricao(),
-                praca.getFotoUrl(),
+                resolveFotoUrl(praca),
                 praca.getMetragemM2(),
                 praca.getStatus()
         );
@@ -166,11 +213,29 @@ public class PracaServiceImpl implements PracaService {
                 praca.getLatitude(),
                 praca.getLongitude(),
                 praca.getDescricao(),
-                praca.getFotoUrl(),
+                resolveFotoUrl(praca),
                 praca.getMetragemM2(),
                 praca.getStatus(),
                 cadastradoPorDTO,
                 historico
         );
+    }
+
+    private String resolveFotoUrl(Praca praca) {
+        return praca.getFoto() != null && praca.getFoto().length > 0
+                ? "/api/pracas/" + praca.getId() + "/foto"
+                : praca.getFotoUrl();
+    }
+
+    private void validarFoto(MultipartFile arquivo) {
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new BusinessException("Selecione uma imagem para enviar");
+        }
+        if (arquivo.getSize() > MAX_FOTO_SIZE) {
+            throw new BusinessException("A imagem deve ter no maximo 5 MB");
+        }
+        if (!FOTO_CONTENT_TYPES.contains(arquivo.getContentType())) {
+            throw new BusinessException("Formato invalido. Envie uma imagem JPEG, PNG ou WebP");
+        }
     }
 }

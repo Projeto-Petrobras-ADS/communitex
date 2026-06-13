@@ -75,6 +75,13 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
                 .cpf(sanitizarNumeros(dto.cpf()))
                 .email(dto.email())
                 .telefone(sanitizarNumeros(dto.telefone()))
+                .cep(sanitizarNumeros(dto.cep()))
+                .logradouro(dto.logradouro())
+                .numero(dto.numero())
+                .complemento(dto.complemento())
+                .bairro(dto.bairro())
+                .cidade(dto.cidade())
+                .estado(normalizarEstado(dto.estado()))
                 .usuario(usuarioSalvo)
                 .build();
 
@@ -101,6 +108,13 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
         pessoaFisica.setCpf(sanitizarNumeros(dto.cpf()));
         pessoaFisica.setEmail(dto.email());
         pessoaFisica.setTelefone(sanitizarNumeros(dto.telefone()));
+        pessoaFisica.setCep(sanitizarNumeros(dto.cep()));
+        pessoaFisica.setLogradouro(dto.logradouro());
+        pessoaFisica.setNumero(dto.numero());
+        pessoaFisica.setComplemento(dto.complemento());
+        pessoaFisica.setBairro(dto.bairro());
+        pessoaFisica.setCidade(dto.cidade());
+        pessoaFisica.setEstado(normalizarEstado(dto.estado()));
 
         log.info("Pessoa Física ID: {} atualizada", id);
         return toResponseDTO(pessoaFisicaRepository.save(pessoaFisica));
@@ -137,13 +151,24 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
         return valor != null && !valor.isEmpty() ? valor.replaceAll("\\D", "") : null;
     }
 
+    private String normalizarEstado(String estado) {
+        return estado != null && !estado.isBlank() ? estado.toUpperCase() : null;
+    }
+
     private PessoaFisicaResponseDTO toResponseDTO(PessoaFisica pessoaFisica) {
         return new PessoaFisicaResponseDTO(
                 pessoaFisica.getId(),
                 pessoaFisica.getNome(),
                 pessoaFisica.getCpf(),
                 pessoaFisica.getEmail(),
-                pessoaFisica.getTelefone()
+                pessoaFisica.getTelefone(),
+                pessoaFisica.getCep(),
+                pessoaFisica.getLogradouro(),
+                pessoaFisica.getNumero(),
+                pessoaFisica.getComplemento(),
+                pessoaFisica.getBairro(),
+                pessoaFisica.getCidade(),
+                pessoaFisica.getEstado()
         );
     }
 }

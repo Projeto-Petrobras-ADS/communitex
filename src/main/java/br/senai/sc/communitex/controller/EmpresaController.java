@@ -2,13 +2,14 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.EmpresaRequestDTO;
 import br.senai.sc.communitex.dto.EmpresaResponseDTO;
-import br.senai.sc.communitex.service.listarTodas;
+import br.senai.sc.communitex.service.EmpresaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,11 +28,12 @@ import java.util.List;
 @Tag(name = "Empresas", description = "Endpoints para gerenciamento de empresas")
 public class EmpresaController {
 
-    private final listarTodas empresaService;
+    private final EmpresaService empresaService;
 
     @Operation(summary = "Listar todas as empresas")
     @ApiResponse(responseCode = "200", description = "Lista de empresas retornada com sucesso")
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public List<EmpresaResponseDTO> listarTodas() {
         return empresaService.listarTodas();
     }
@@ -40,6 +42,7 @@ public class EmpresaController {
     @ApiResponse(responseCode = "200", description = "Empresa encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @GetMapping("/{id}")
+    @PreAuthorize("@authz.isEmpresaOwnerOrAdmin(#id)")
     public EmpresaResponseDTO buscarPorId(@PathVariable Long id) {
         return empresaService.buscarPorId(id);
     }
@@ -57,6 +60,7 @@ public class EmpresaController {
     @ApiResponse(responseCode = "200", description = "Empresa atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @PutMapping("/{id}")
+    @PreAuthorize("@authz.isEmpresaOwnerOrAdmin(#id)")
     public EmpresaResponseDTO atualizar(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO dto) {
         return empresaService.atualizar(id, dto);
     }
@@ -66,6 +70,7 @@ public class EmpresaController {
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
     public void excluir(@PathVariable Long id) {
         empresaService.excluir(id);
     }

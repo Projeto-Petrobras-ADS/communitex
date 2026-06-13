@@ -6,7 +6,7 @@ import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.repository.RepresentanteEmpresaRepository;
-import br.senai.sc.communitex.service.listarTodas;
+import br.senai.sc.communitex.service.EmpresaService;
 import br.senai.sc.communitex.service.RepresentanteEmpresaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,7 @@ class RepresentanteEmpresaServiceImplTest {
     private RepresentanteEmpresaRepository representanteRepository;
 
     @Mock
-    private listarTodas empresaService;
+    private EmpresaService empresaService;
 
     @InjectMocks
     private RepresentanteEmpresaService representanteService;

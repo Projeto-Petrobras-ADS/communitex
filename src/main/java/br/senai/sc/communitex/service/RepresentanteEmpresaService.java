@@ -18,7 +18,7 @@ import java.util.List;
 public class RepresentanteEmpresaService {
 
     private final RepresentanteEmpresaRepository representanteRepository;
-    private final listarTodas empresaService;
+    private final EmpresaService empresaService;
 
     @Transactional
     public RepresentanteEmpresaResponseDTO create(RepresentanteEmpresaRequestDTO dto) {
