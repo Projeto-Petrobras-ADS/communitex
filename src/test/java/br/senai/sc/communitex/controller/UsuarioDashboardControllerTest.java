@@ -33,7 +33,7 @@ class UsuarioDashboardControllerTest {
     @Test
     void givenUsuario_whenObterDashboard_thenReturnsAggregatedData() throws Exception {
         when(dashboardService.obterDashboard()).thenReturn(new UsuarioDashboardDTO(
-                "Maria", 3, 1, 1, 1, 4, 1, 2, 1, 8, 5, 2, 25,
+                "Maria", 3, 1, 1, 1, 4, 1, 2, 1, 8, 5, 2, 25, 1, 1, 0,
                 List.of(), List.of()
         ));
 

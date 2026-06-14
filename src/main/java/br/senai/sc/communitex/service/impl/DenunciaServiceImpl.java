@@ -50,6 +50,10 @@ public class DenunciaServiceImpl implements DenunciaService {
     public DenunciaResponseDTO criar(DenunciaRequestDTO dto) {
         var autor = getAuthenticatedUser();
 
+        if ("ROLE_EMPRESA".equals(autor.getRole())) {
+            throw new ForbiddenException("Empresas não podem cadastrar denúncias");
+        }
+
         verificarDuplicidadeDaDenuncia(dto);
 
         var issue = Denuncia.builder()
@@ -122,6 +126,9 @@ public class DenunciaServiceImpl implements DenunciaService {
     public DenunciaResponseDTO atualizarStatus(Long id, IssueStatus status) {
         var issue = buscarDenunciaPorId(id);
 
+        if (status == IssueStatus.RESOLVIDA) {
+            throw new BusinessException("A resolucao exige confirmacao da empresa responsavel e do autor da denuncia");
+        }
         issue.setStatus(status);
         log.info("Status da denúncia ID: {} atualizado para: {}", id, status);
         return toResponseDTO(issueRepository.save(issue));

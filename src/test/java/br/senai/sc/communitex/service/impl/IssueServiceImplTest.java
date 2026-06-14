@@ -91,6 +91,26 @@ class IssueServiceImplTest {
     }
 
     @Test
+    void dadaEmpresaAutenticada_aoCriar_deveLancarForbiddenException() {
+        autenticar("empresa@communitex.com");
+        var empresa = usuario(2L, "empresa@communitex.com", "Empresa");
+        empresa.setRole("ROLE_EMPRESA");
+
+        when(usuarioRepository.findByUsername("empresa@communitex.com")).thenReturn(Optional.of(empresa));
+
+        assertThrows(ForbiddenException.class, () -> issueService.criar(new DenunciaRequestDTO(
+                "Buraco grande",
+                "Existe um buraco perigoso",
+                -27.5969,
+                -48.5495,
+                null,
+                IssueType.BURACO
+        )));
+
+        verify(issueRepository, never()).save(any());
+    }
+
+    @Test
     void dadaDenunciaDuplicada_aoCriar_deveLancarDuplicateIssueException() {
         autenticar("cidadao@communitex.com");
         var autor = usuario(1L, "cidadao@communitex.com", "Cidadao");
@@ -127,6 +147,15 @@ class IssueServiceImplTest {
         var response = issueService.atualizarStatus(10L, IssueStatus.EM_ANALISE);
 
         assertEquals(IssueStatus.EM_ANALISE, response.status());
+    }
+
+    @Test
+    void dadoStatusResolvida_aoAtualizarDiretamente_deveExigirConfirmacaoDupla() {
+        var autor = usuario(1L, "cidadao@communitex.com", "Cidadao");
+        when(issueRepository.findById(10L)).thenReturn(Optional.of(issue(10L, "Titulo", -27.6, -48.5, autor, IssueStatus.EM_ANDAMENTO)));
+
+        assertThrows(BusinessException.class, () -> issueService.atualizarStatus(10L, IssueStatus.RESOLVIDA));
+        verify(issueRepository, never()).save(any());
     }
 
     @Test

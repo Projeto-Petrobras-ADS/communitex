@@ -16,6 +16,10 @@ public record EmpresaDashboardDTO(
         double areaTotalAdotadaM2,
         double taxaAprovacao,
         long adocoesProximasDoFim,
+        long reparosEmAndamento,
+        long reparosAguardandoConfirmacao,
+        long reparosConfirmados,
+        long reparosContestados,
         List<PracaResponseDTO> pracasRecomendadas,
         List<PropostaEmpresaDTO> propostasRecentes,
         List<DenunciaResponseDTO> denunciasRecentes

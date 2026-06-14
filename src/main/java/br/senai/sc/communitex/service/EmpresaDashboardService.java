@@ -5,6 +5,7 @@ import br.senai.sc.communitex.dto.EmpresaDashboardDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.dto.PropostaEmpresaDTO;
 import br.senai.sc.communitex.enums.InteractionType;
+import br.senai.sc.communitex.enums.AtendimentoDenunciaStatus;
 import br.senai.sc.communitex.enums.IssueStatus;
 import br.senai.sc.communitex.enums.StatusAdocao;
 import br.senai.sc.communitex.enums.StatusPraca;
@@ -14,6 +15,7 @@ import br.senai.sc.communitex.model.Denuncia;
 import br.senai.sc.communitex.model.DenunciaInteracao;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.repository.AdocaoRepository;
+import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
@@ -39,6 +41,7 @@ public class EmpresaDashboardService {
     private final PracaRepository pracaRepository;
     private final AdocaoRepository adocaoRepository;
     private final DenunciaRepository denunciaRepository;
+    private final AtendimentoDenunciaRepository atendimentoRepository;
 
     @Transactional(readOnly = true)
     public EmpresaDashboardDTO obterDashboard() {
@@ -87,6 +90,10 @@ public class EmpresaDashboardService {
                 areaTotal,
                 taxaAprovacao,
                 proximasDoFim,
+                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.EM_ANDAMENTO),
+                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA),
+                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR),
+                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.CONTESTADO),
                 pracaRepository.findTop4ByStatusOrderByIdDesc(StatusPraca.DISPONIVEL).stream().map(this::toPracaDTO).toList(),
                 propostas.stream()
                         .sorted(Comparator.comparing(Adocao::getDataInicio, Comparator.nullsLast(Comparator.reverseOrder())))

@@ -11,6 +11,7 @@ import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.AdocaoRepository;
+import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
@@ -42,6 +43,8 @@ class EmpresaDashboardServiceTest {
     private AdocaoRepository adocaoRepository;
     @Mock
     private DenunciaRepository denunciaRepository;
+    @Mock
+    private AtendimentoDenunciaRepository atendimentoRepository;
 
     @InjectMocks
     private EmpresaDashboardService dashboardService;

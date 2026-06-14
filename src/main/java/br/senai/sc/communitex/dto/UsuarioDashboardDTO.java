@@ -16,6 +16,9 @@ public record UsuarioDashboardDTO(
         long apoiosRealizados,
         long comentariosRealizados,
         double taxaResolucao,
+        long confirmacoesPendentes,
+        long reparosConfirmados,
+        long reparosContestados,
         List<PracaResponseDTO> pracasRecentes,
         List<DenunciaResponseDTO> denunciasRecentes
 ) {

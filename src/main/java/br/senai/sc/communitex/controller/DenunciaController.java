@@ -49,6 +49,7 @@ public class DenunciaController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @ApiResponse(responseCode = "409", description = "Já existe uma denúncia similar próxima")
     @PostMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public DenunciaResponseDTO create(@Valid @RequestBody DenunciaRequestDTO dto) {
         return issueService.criar(dto);

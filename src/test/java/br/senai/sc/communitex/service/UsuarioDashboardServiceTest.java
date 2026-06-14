@@ -8,6 +8,7 @@ import br.senai.sc.communitex.model.DenunciaInteracao;
 import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.DenunciaInteracaoRepository;
+import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.PessoaFisicaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
@@ -38,6 +39,8 @@ class UsuarioDashboardServiceTest {
     private DenunciaRepository denunciaRepository;
     @Mock
     private DenunciaInteracaoRepository interacaoRepository;
+    @Mock
+    private AtendimentoDenunciaRepository atendimentoRepository;
 
     @InjectMocks
     private UsuarioDashboardService dashboardService;

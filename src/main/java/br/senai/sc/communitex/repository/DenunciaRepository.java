@@ -43,6 +43,9 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
     List<Denuncia> findByStatus(IssueStatus status);
 
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findByStatusIn(List<IssueStatus> statuses);
+
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findByLatitudeBetweenAndLongitudeBetween(
             Double minLatitude,
             Double maxLatitude,

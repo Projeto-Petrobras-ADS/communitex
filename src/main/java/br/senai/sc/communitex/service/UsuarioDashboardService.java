@@ -4,12 +4,14 @@ import br.senai.sc.communitex.dto.DenunciaResponseDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.dto.UsuarioDashboardDTO;
 import br.senai.sc.communitex.enums.InteractionType;
+import br.senai.sc.communitex.enums.AtendimentoDenunciaStatus;
 import br.senai.sc.communitex.enums.IssueStatus;
 import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.model.Denuncia;
 import br.senai.sc.communitex.model.DenunciaInteracao;
 import br.senai.sc.communitex.repository.DenunciaInteracaoRepository;
+import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.PessoaFisicaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
@@ -32,6 +34,7 @@ public class UsuarioDashboardService {
     private final PracaRepository pracaRepository;
     private final DenunciaRepository denunciaRepository;
     private final DenunciaInteracaoRepository interacaoRepository;
+    private final AtendimentoDenunciaRepository atendimentoRepository;
 
     @Transactional(readOnly = true)
     public UsuarioDashboardDTO obterDashboard() {
@@ -69,6 +72,9 @@ public class UsuarioDashboardService {
                 interacaoRepository.countByUsuarioIdAndTipo(usuario.getId(), InteractionType.APOIO),
                 interacaoRepository.countByUsuarioIdAndTipo(usuario.getId(), InteractionType.COMENTARIO),
                 taxaResolucao,
+                atendimentoRepository.countByDenunciaAutorIdAndStatus(usuario.getId(), AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA),
+                atendimentoRepository.countByDenunciaAutorIdAndStatus(usuario.getId(), AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR),
+                atendimentoRepository.countByDenunciaAutorIdAndStatus(usuario.getId(), AtendimentoDenunciaStatus.CONTESTADO),
                 pracaRepository.findTop5ByCadastradoPorIdOrderByIdDesc(pessoa.getId()).stream().map(this::toPracaDTO).toList(),
                 denunciaRepository.findTop5ByAutorIdOrderByDataCriacaoDesc(usuario.getId()).stream().map(this::toDenunciaDTO).toList()
         );
