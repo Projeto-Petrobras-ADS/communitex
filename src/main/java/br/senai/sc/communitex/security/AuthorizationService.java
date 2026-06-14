@@ -6,7 +6,6 @@ import br.senai.sc.communitex.repository.PracaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,19 +57,11 @@ public class AuthorizationService {
     }
 
     private String currentUsername() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
+        try {
+            return AuthenticatedUser.username();
+        } catch (RuntimeException ex) {
             return null;
         }
-
-        var principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername();
-        }
-        if (principal instanceof String username) {
-            return username;
-        }
-        return null;
     }
 
     private boolean hasRole(Authentication authentication, String role) {

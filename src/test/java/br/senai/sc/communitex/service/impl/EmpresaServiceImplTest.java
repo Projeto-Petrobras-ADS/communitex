@@ -52,6 +52,8 @@ class EmpresaServiceImplTest {
         empresa.setNomeFantasia("Tech Soluções");
         empresa.setEmail("contato@tech.com");
         empresa.setTelefone("48999999999");
+        empresa.setUsuarioRepresentante(Usuario.builder()
+                .id(10L).username("joao@tech.com").password("hash").role("ROLE_EMPRESA").build());
 
         RepresentanteEmpresa representante = new RepresentanteEmpresa();
         representante.setId(1L);
@@ -143,11 +145,15 @@ class EmpresaServiceImplTest {
     @Test
     void givenEmpresaExistente_whenUpdate_thenAtualizaEmpresa() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(passwordEncoder.encode("senha123")).thenReturn("nova-senha");
+        when(usuarioService.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
         EmpresaResponseDTO response = empresaService.atualizar(1L, requestDTO);
 
         assertEquals("Tech Soluções", response.nomeFantasia());
+        assertEquals("joao@tech.com", empresa.getUsuarioRepresentante().getUsername());
+        assertEquals("nova-senha", empresa.getUsuarioRepresentante().getPassword());
         verify(empresaRepository, times(1)).save(any(Empresa.class));
     }
 

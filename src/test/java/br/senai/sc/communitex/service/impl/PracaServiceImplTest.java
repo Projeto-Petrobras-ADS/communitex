@@ -55,7 +55,7 @@ class PracaServiceImplTest {
     @BeforeEach
     void setUp() {
         // Setup SecurityContext mock for authenticated user
-        var authentication = new UsernamePasswordAuthenticationToken("testuser", "password");
+        var authentication = UsernamePasswordAuthenticationToken.authenticated("testuser", "password", List.of());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         pracaService = new PracaServiceImpl(pracaRepository, pessoaFisicaService, arquivoService,
                 new PracaGeometryService(objectMapper));

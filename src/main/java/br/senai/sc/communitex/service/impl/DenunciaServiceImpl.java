@@ -17,6 +17,7 @@ import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.DenunciaInteracaoRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.UsuarioRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import br.senai.sc.communitex.service.DenunciaService;
 import br.senai.sc.communitex.service.ArquivoService;
 import br.senai.sc.communitex.util.ArquivoUrls;
@@ -24,8 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -263,17 +262,7 @@ public class DenunciaServiceImpl implements DenunciaService {
     }
 
     private Usuario getAuthenticatedUser() {
-        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String str) {
-            username = str;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
+        var username = AuthenticatedUser.username();
         return usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Usuário não encontrado: " + username));
     }

@@ -300,7 +300,7 @@ class IssueServiceImplTest {
 
     private void autenticar(String username) {
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(username, "secret")
+                UsernamePasswordAuthenticationToken.authenticated(username, "secret", List.of())
         );
     }
 

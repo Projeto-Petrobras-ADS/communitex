@@ -187,7 +187,7 @@ class AdocaoServiceImplTest {
     @Test
     void givenPrincipalInvalido_whenListarPropostas_thenLancaForbiddenException() {
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(new Object(), "N/A")
+                UsernamePasswordAuthenticationToken.authenticated(new Object(), "N/A", List.of())
         );
 
         assertThrows(ForbiddenException.class, () -> adocaoService.listarPropostasMinhasEmpresa());
@@ -220,7 +220,7 @@ class AdocaoServiceImplTest {
 
     private void authenticate(String username) {
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(username, "secret")
+                UsernamePasswordAuthenticationToken.authenticated(username, "secret", List.of())
         );
     }
 

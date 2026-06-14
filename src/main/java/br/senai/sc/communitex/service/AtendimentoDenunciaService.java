@@ -20,9 +20,8 @@ import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.UsuarioRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -176,21 +175,13 @@ public class AtendimentoDenunciaService {
     }
 
     private String authenticatedUsername() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        var principal = authentication != null ? authentication.getPrincipal() : null;
-        if (principal instanceof UserDetails userDetails) return userDetails.getUsername();
-        if (principal instanceof String value) return value;
-        throw new ForbiddenException("Usuario autenticado nao encontrado no contexto");
+        return AuthenticatedUser.username();
     }
 
     private void requireStatus(AtendimentoDenuncia atendimento, AtendimentoDenunciaStatus expected) {
         if (atendimento.getStatus() != expected) {
             throw new BusinessException("Acao indisponivel para o status atual do atendimento");
         }
-    }
-
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private AtendimentoDenunciaResponseDTO toResponse(AtendimentoDenuncia atendimento) {

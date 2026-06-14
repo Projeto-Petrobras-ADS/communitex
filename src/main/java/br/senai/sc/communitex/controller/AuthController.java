@@ -5,7 +5,6 @@ import br.senai.sc.communitex.dto.AuthRequest;
 import br.senai.sc.communitex.dto.AuthResponse;
 import br.senai.sc.communitex.dto.RefreshRequest;
 import br.senai.sc.communitex.dto.RegisterRequest;
-import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.service.JwtService;
@@ -17,7 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -100,11 +99,11 @@ public class AuthController {
         try {
             username = jwtService.extractUsername(requestRefreshToken);
         } catch (Exception ex) {
-            throw new ForbiddenException("Refresh token inválido ou expirado");
+            throw new AuthenticationServiceException("Refresh token invalido ou expirado");
         }
 
         Usuario usuario = usuarioService.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new AuthenticationServiceException("Refresh token invalido ou expirado"));
 
         if (jwtService.isTokenValid(requestRefreshToken, usuario) &&
                 usuario.getRefreshToken() != null &&
@@ -115,6 +114,6 @@ public class AuthController {
             return new AuthResponse(newAccessToken, requestRefreshToken);
         }
 
-        throw new ForbiddenException("Refresh token inválido ou expirado");
+        throw new AuthenticationServiceException("Refresh token invalido ou expirado");
     }
 }

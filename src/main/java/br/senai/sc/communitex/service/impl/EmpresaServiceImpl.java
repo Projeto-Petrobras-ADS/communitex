@@ -15,12 +15,12 @@ import br.senai.sc.communitex.service.EmpresaService;
 import br.senai.sc.communitex.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +57,8 @@ public class EmpresaServiceImpl implements EmpresaService {
     @Override
     @Transactional
     public EmpresaResponseDTO criar(EmpresaRequestDTO dto) {
-        empresaRepository.buscarPorCnpj(dto.cnpj())
+        var cnpj = sanitizarNumeros(dto.cnpj());
+        empresaRepository.buscarPorCnpj(cnpj)
                 .ifPresent(existing -> {
                     throw new BusinessException("Já existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
                 });
@@ -77,17 +78,17 @@ public class EmpresaServiceImpl implements EmpresaService {
 
         var empresa = Empresa.builder()
                 .razaoSocial(dto.razaoSocial())
-                .cnpj(dto.cnpj().replaceAll("\\D", ""))
+                .cnpj(cnpj)
                 .nomeFantasia(dto.nomeFantasia())
                 .email(dto.email())
-                .telefone(dto.telefone() != null ? dto.telefone().replaceAll("\\D", "") : null)
-                .cep(dto.cep() != null ? dto.cep().replaceAll("\\D", "") : null)
+                .telefone(sanitizarNumeros(dto.telefone()))
+                .cep(sanitizarNumeros(dto.cep()))
                 .logradouro(dto.logradouro())
                 .numero(dto.numero())
                 .complemento(dto.complemento())
                 .bairro(dto.bairro())
                 .cidade(dto.cidade())
-                .estado(dto.estado() != null ? dto.estado().toUpperCase() : null)
+                .estado(normalizarEstado(dto.estado()))
                 .usuarioRepresentante(usuarioSalvo)
                 .build();
 
@@ -102,7 +103,44 @@ public class EmpresaServiceImpl implements EmpresaService {
         var empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
 
-        BeanUtils.copyProperties(dto, empresa, "id", "usuarioRepresentante", "representantes", "adocaos");
+        var cnpj = sanitizarNumeros(dto.cnpj());
+        if (!Objects.equals(empresa.getCnpj(), cnpj)) {
+            empresaRepository.buscarPorCnpj(cnpj)
+                    .filter(existing -> !Objects.equals(existing.getId(), id))
+                    .ifPresent(existing -> {
+                        throw new BusinessException("Ja existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
+                    });
+        }
+
+        var usuario = empresa.getUsuarioRepresentante();
+        if (usuario == null) {
+            throw new BusinessException("Empresa nao possui usuario representante associado");
+        }
+        if (!Objects.equals(usuario.getUsername(), dto.emailRepresentante())) {
+            usuarioService.findByUsername(dto.emailRepresentante())
+                    .filter(existing -> !Objects.equals(existing.getId(), usuario.getId()))
+                    .ifPresent(existing -> {
+                        throw new BusinessException("Ja existe um usuario cadastrado com o email: " + dto.emailRepresentante());
+                    });
+        }
+
+        empresa.setRazaoSocial(dto.razaoSocial());
+        empresa.setCnpj(cnpj);
+        empresa.setNomeFantasia(dto.nomeFantasia());
+        empresa.setEmail(dto.email());
+        empresa.setTelefone(sanitizarNumeros(dto.telefone()));
+        empresa.setCep(sanitizarNumeros(dto.cep()));
+        empresa.setLogradouro(dto.logradouro());
+        empresa.setNumero(dto.numero());
+        empresa.setComplemento(dto.complemento());
+        empresa.setBairro(dto.bairro());
+        empresa.setCidade(dto.cidade());
+        empresa.setEstado(normalizarEstado(dto.estado()));
+
+        usuario.setNome(dto.nomeRepresentante());
+        usuario.setUsername(dto.emailRepresentante());
+        usuario.setPassword(passwordEncoder.encode(dto.senhaRepresentante()));
+        usuarioService.save(usuario);
 
         log.info("Empresa ID: {} atualizada", id);
         return toResponseDTO(empresaRepository.save(empresa));
@@ -130,7 +168,7 @@ public class EmpresaServiceImpl implements EmpresaService {
             empresa.getNomeFantasia()
         );
 
-        var adocoes = empresa.getAdocaos().stream()
+        var adocoes = (empresa.getAdocaos() == null ? List.<Adocao>of() : empresa.getAdocaos()).stream()
             .map(this::toAdocaoDTO)
             .toList();
 
@@ -153,7 +191,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         );
     }
 
-        private AdocaoResponseDTO toAdocaoDTO(Adocao adocao) {
+    private AdocaoResponseDTO toAdocaoDTO(Adocao adocao) {
         var praca = adocao.getPraca();
 
         return new AdocaoResponseDTO(
@@ -168,5 +206,13 @@ public class EmpresaServiceImpl implements EmpresaService {
             praca != null ? praca.getNome() : null,
             praca != null ? praca.getCidade() : null
         );
-        }
+    }
+
+    private String sanitizarNumeros(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.replaceAll("\\D", "");
+    }
+
+    private String normalizarEstado(String estado) {
+        return estado == null || estado.isBlank() ? null : estado.toUpperCase();
+    }
 }

@@ -60,7 +60,9 @@ class UsuarioDashboardServiceTest {
         var aberta = Denuncia.builder().id(2L).titulo("Buraco").descricao("Via danificada").latitude(-27.0).longitude(-48.0)
                 .status(IssueStatus.ABERTA).dataCriacao(LocalDateTime.now()).autor(usuario).interacoes(List.of()).build();
 
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("maria@email.com", "secret"));
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated("maria@email.com", "secret", List.of())
+        );
         when(pessoaFisicaRepository.findByUsuarioUsername("maria@email.com")).thenReturn(Optional.of(pessoa));
         when(denunciaRepository.findByAutorId(7L)).thenReturn(List.of(resolvida, aberta));
         when(denunciaRepository.findTop5ByAutorIdOrderByDataCriacaoDesc(7L)).thenReturn(List.of(resolvida, aberta));

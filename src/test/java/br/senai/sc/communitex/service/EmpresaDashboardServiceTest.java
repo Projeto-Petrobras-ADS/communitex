@@ -64,7 +64,9 @@ class EmpresaDashboardServiceTest {
         var confirmado = reparo(23L, denuncia, empresa, AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR);
         var contestado = reparo(24L, denuncia, empresa, AtendimentoDenunciaStatus.CONTESTADO);
 
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("empresa", "secret"));
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated("empresa", "secret", List.of())
+        );
         when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa")).thenReturn(Optional.of(empresa));
         when(adocaoRepository.findByEmpresaId(3L)).thenReturn(List.of(aprovada, rejeitada));
         when(atendimentoRepository.findByEmpresaIdOrderByDataAceiteDesc(3L))
@@ -97,7 +99,9 @@ class EmpresaDashboardServiceTest {
         var usuario = Usuario.builder().id(7L).username("empresa").build();
         var empresa = Empresa.builder().id(3L).razaoSocial("Empresa Verde LTDA").usuarioRepresentante(usuario).build();
 
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("empresa", "secret"));
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated("empresa", "secret", List.of())
+        );
         when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa")).thenReturn(Optional.of(empresa));
         when(adocaoRepository.findByEmpresaId(3L)).thenReturn(List.of());
         when(atendimentoRepository.findByEmpresaIdOrderByDataAceiteDesc(3L)).thenReturn(List.of());

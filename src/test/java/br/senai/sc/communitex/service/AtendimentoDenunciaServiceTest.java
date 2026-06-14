@@ -107,7 +107,9 @@ class AtendimentoDenunciaServiceTest {
     }
 
     private void authenticate(String username) {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(username, "secret"));
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(username, "secret", List.of())
+        );
     }
 
     private Usuario user(Long id, String username, String role) {

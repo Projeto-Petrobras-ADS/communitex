@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +55,8 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
     @Override
     @Transactional
     public PessoaFisicaResponseDTO create(PessoaFisicaRequestDTO dto) {
-        validarDuplicidadeCpf(dto.cpf(), null);
+        var cpf = sanitizarNumeros(dto.cpf());
+        validarDuplicidadeCpf(cpf, null);
         validarDuplicidadeEmail(dto.email(), null);
 
         usuarioService.findByUsername(dto.email())
@@ -72,7 +74,7 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
 
         var pessoaFisica = PessoaFisica.builder()
                 .nome(dto.nome())
-                .cpf(sanitizarNumeros(dto.cpf()))
+                .cpf(cpf)
                 .email(dto.email())
                 .telefone(sanitizarNumeros(dto.telefone()))
                 .cep(sanitizarNumeros(dto.cep()))
@@ -96,16 +98,23 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
         var pessoaFisica = pessoaFisicaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pessoa Física não encontrada com ID: " + id));
 
-        if (!pessoaFisica.getCpf().equals(dto.cpf())) {
-            validarDuplicidadeCpf(dto.cpf(), id);
+        var cpf = sanitizarNumeros(dto.cpf());
+        if (!Objects.equals(pessoaFisica.getCpf(), cpf)) {
+            validarDuplicidadeCpf(cpf, id);
         }
 
-        if (!pessoaFisica.getEmail().equals(dto.email())) {
+        if (!Objects.equals(pessoaFisica.getEmail(), dto.email())) {
             validarDuplicidadeEmail(dto.email(), id);
+            usuarioService.findByUsername(dto.email())
+                    .filter(existing -> pessoaFisica.getUsuario() == null
+                            || !Objects.equals(existing.getId(), pessoaFisica.getUsuario().getId()))
+                    .ifPresent(existing -> {
+                        throw new BusinessException("Ja existe um usuario cadastrado com o email: " + dto.email());
+                    });
         }
 
         pessoaFisica.setNome(dto.nome());
-        pessoaFisica.setCpf(sanitizarNumeros(dto.cpf()));
+        pessoaFisica.setCpf(cpf);
         pessoaFisica.setEmail(dto.email());
         pessoaFisica.setTelefone(sanitizarNumeros(dto.telefone()));
         pessoaFisica.setCep(sanitizarNumeros(dto.cep()));
@@ -115,6 +124,15 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
         pessoaFisica.setBairro(dto.bairro());
         pessoaFisica.setCidade(dto.cidade());
         pessoaFisica.setEstado(normalizarEstado(dto.estado()));
+
+        var usuario = pessoaFisica.getUsuario();
+        if (usuario == null) {
+            throw new BusinessException("Pessoa fisica nao possui usuario associado");
+        }
+        usuario.setNome(dto.nome());
+        usuario.setUsername(dto.email());
+        usuario.setPassword(passwordEncoder.encode(dto.senha()));
+        usuarioService.save(usuario);
 
         log.info("Pessoa Física ID: {} atualizada", id);
         return toResponseDTO(pessoaFisicaRepository.save(pessoaFisica));

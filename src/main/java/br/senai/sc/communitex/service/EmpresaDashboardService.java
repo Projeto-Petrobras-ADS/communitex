@@ -15,9 +15,8 @@ import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import br.senai.sc.communitex.util.ArquivoUrls;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,18 +105,7 @@ public class EmpresaDashboardService {
     }
 
     private Empresa getEmpresaFromAuthenticatedUser() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        var principal = authentication != null ? authentication.getPrincipal() : null;
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String value) {
-            username = value;
-        } else {
-            throw new ForbiddenException("Usuario autenticado nao encontrado no contexto");
-        }
-
+        var username = AuthenticatedUser.username();
         return empresaRepository.buscarPorUsuarioRepresentanteUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuario autenticado: " + username));
     }

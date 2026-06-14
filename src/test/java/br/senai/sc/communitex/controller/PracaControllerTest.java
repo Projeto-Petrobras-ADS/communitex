@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @WebMvcTest(PracaController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -113,6 +115,16 @@ class PracaControllerTest {
         mockMvc.perform(delete("/api/pracas/{id}", 1L))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void createEndpointAllowsOnlyUsersAndAdmins() throws Exception {
+        var method = PracaController.class.getMethod(
+                "create", PracaRequestDTO.class, org.springframework.web.multipart.MultipartFile.class
+        );
+
+        assertEquals("hasAnyRole('USER', 'ADMIN')", method.getAnnotation(PreAuthorize.class).value());
+    }
+
     private MockMultipartFile jsonPart(String name, String json) {
         return new MockMultipartFile(name, "", MediaType.APPLICATION_JSON_VALUE, json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }

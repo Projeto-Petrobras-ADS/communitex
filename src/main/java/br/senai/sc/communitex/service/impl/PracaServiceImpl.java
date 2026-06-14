@@ -7,12 +7,11 @@ import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
-import br.senai.sc.communitex.exception.BusinessException;
-import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.PracaService;
 import br.senai.sc.communitex.service.PracaGeometryService;
@@ -24,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -130,18 +127,7 @@ public class PracaServiceImpl implements PracaService {
 
 
     private PessoaFisica getPessoaFisicaFromAuthenticatedUser() {
-        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String str) {
-            username = str;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
-        return pessoaFisicaService.findByUsuarioUsername(username);
+        return pessoaFisicaService.findByUsuarioUsername(AuthenticatedUser.username());
     }
 
     private PracaResponseDTO toResponseDTO(Praca praca) {
@@ -173,10 +159,10 @@ public class PracaServiceImpl implements PracaService {
             );
         }
 
-        var historico = praca.getAdocoes().stream()
+        var historico = (praca.getAdocoes() == null ? List.<br.senai.sc.communitex.model.Adocao>of() : praca.getAdocoes()).stream()
                 .map(adocao -> new AdocaoHistoricoDTO(
-                        adocao.getEmpresa().getId(),
-                        adocao.getEmpresa().getRazaoSocial(),
+                        adocao.getEmpresa() != null ? adocao.getEmpresa().getId() : null,
+                        adocao.getEmpresa() != null ? adocao.getEmpresa().getRazaoSocial() : null,
                         adocao.getDescricaoProjeto()
                 ))
                 .toList();

@@ -15,9 +15,8 @@ import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.PessoaFisicaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import br.senai.sc.communitex.util.ArquivoUrls;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +38,7 @@ public class UsuarioDashboardService {
 
     @Transactional(readOnly = true)
     public UsuarioDashboardDTO obterDashboard() {
-        var pessoa = pessoaFisicaRepository.findByUsuarioUsername(authenticatedUsername())
+        var pessoa = pessoaFisicaRepository.findByUsuarioUsername(AuthenticatedUser.username())
                 .orElseThrow(() -> new ForbiddenException("Nenhuma pessoa fisica associada ao usuario autenticado"));
         var usuario = pessoa.getUsuario();
         if (usuario == null) {
@@ -79,18 +78,6 @@ public class UsuarioDashboardService {
                 pracaRepository.findTop5ByCadastradoPorIdOrderByIdDesc(pessoa.getId()).stream().map(this::toPracaDTO).toList(),
                 denunciaRepository.findTop5ByAutorIdOrderByDataCriacaoDesc(usuario.getId()).stream().map(this::toDenunciaDTO).toList()
         );
-    }
-
-    private String authenticatedUsername() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        var principal = authentication != null ? authentication.getPrincipal() : null;
-        if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername();
-        }
-        if (principal instanceof String value) {
-            return value;
-        }
-        throw new ForbiddenException("Usuario autenticado nao encontrado no contexto");
     }
 
     private long countDenuncias(List<Denuncia> denuncias, Set<IssueStatus> statuses) {

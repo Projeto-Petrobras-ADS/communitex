@@ -46,6 +46,9 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.role == null || this.role.isBlank()) {
+            return Set.of();
+        }
         return Set.of(new SimpleGrantedAuthority(this.role));
     }
 

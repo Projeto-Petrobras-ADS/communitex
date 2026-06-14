@@ -14,13 +14,12 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import br.senai.sc.communitex.enums.NotificationChannel;
 import br.senai.sc.communitex.service.IAdocaoService;
 import br.senai.sc.communitex.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,17 +106,7 @@ public class AdocaoServiceImpl implements IAdocaoService {
 
 
     private Empresa getEmpresaFromAuthenticatedUser() {
-        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String str) {
-            username = str;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
+        var username = AuthenticatedUser.username();
         return empresaRepository.buscarPorUsuarioRepresentanteUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuário autenticado: " + username));
     }
