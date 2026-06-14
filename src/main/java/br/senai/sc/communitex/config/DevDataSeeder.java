@@ -80,12 +80,63 @@ public class DevDataSeeder implements CommandLineRunner {
         Denuncia vazamento = getOrCreateIssue("Vazamento proximo ao playground",
                 "Agua escorrendo continuamente pela calcada.", -27.5890, -48.5210,
                 IssueStatus.CONTESTADA, IssueType.VAZAMENTO, brunoUser);
+        Denuncia buraco = getOrCreateIssue("Buraco na via ao lado da praca",
+                "Um buraco profundo esta dificultando a passagem de carros e bicicletas.", -27.5961, -48.5472,
+                IssueStatus.EM_ANALISE, IssueType.BURACO, anaUser);
+        Denuncia poda = getOrCreateIssue("Galhos baixos bloqueando a ciclovia",
+                "Os galhos cresceram sobre a ciclovia e reduzem a visibilidade no trecho.", -27.5879, -48.5198,
+                IssueStatus.ABERTA, IssueType.PODA_ARVORE, brunoUser);
+        Denuncia pichacao = getOrCreateIssue("Muro da quadra esportiva pichado",
+                "A pintura do muro e das placas da quadra foi danificada.", -27.5912, -48.5101,
+                IssueStatus.AGUARDANDO_CONFIRMACAO, IssueType.PICHACAO, anaUser);
+        Denuncia sinalizacao = getOrCreateIssue("Faixa de pedestres pouco visivel",
+                "A faixa em frente ao acesso principal esta apagada e precisa ser repintada.", -27.5948, -48.5488,
+                IssueStatus.EM_ANDAMENTO, IssueType.SINALIZACAO, brunoUser);
+        Denuncia banco = getOrCreateIssue("Banco de madeira quebrado",
+                "Um dos bancos proximos ao jardim esta com ripas soltas.", -27.5903, -48.5089,
+                IssueStatus.RESOLVIDA, IssueType.OUTRO, anaUser);
+        Denuncia lixeira = getOrCreateIssue("Lixeira danificada na entrada",
+                "A lixeira perdeu a tampa e nao pode ser utilizada em dias de chuva.", -27.5882, -48.5201,
+                IssueStatus.REJEITADA, IssueType.LIXO, brunoUser);
+        Denuncia placa = getOrCreateIssue("Placa de identificacao solta",
+                "A placa com o nome da praca esta inclinada e pode cair.", -27.5957, -48.5476,
+                IssueStatus.ABERTA, IssueType.SINALIZACAO, anaUser);
+        Denuncia bebedouro = getOrCreateIssue("Bebedouro sem funcionamento",
+                "O bebedouro proximo a quadra nao libera agua.", -27.5909, -48.5098,
+                IssueStatus.EM_ANALISE, IssueType.OUTRO, brunoUser);
 
         createInteractionIfMissing(luz, brunoUser, InteractionType.APOIO, null);
         createInteractionIfMissing(luz, brunoUser, InteractionType.COMENTARIO, "O problema tambem afeta a rua lateral.");
+        createInteractionIfMissing(luz, verdeUser, InteractionType.CURTIDA, null);
         createInteractionIfMissing(calcada, anaUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(calcada, urbanaUser, InteractionType.APOIO, null);
         createInteractionIfMissing(lixo, brunoUser, InteractionType.COMENTARIO,
                 "A limpeza foi realizada e o local esta organizado.");
+        createInteractionIfMissing(buraco, brunoUser, InteractionType.APOIO, null);
+        createInteractionIfMissing(buraco, brunoUser, InteractionType.COMENTARIO,
+                "O buraco fica cheio de agua depois da chuva.");
+        createInteractionIfMissing(buraco, urbanaUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(poda, anaUser, InteractionType.APOIO, null);
+        createInteractionIfMissing(poda, verdeUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(pichacao, brunoUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(pichacao, urbanaUser, InteractionType.COMENTARIO,
+                "A nova pintura foi concluida. Aguardamos a avaliacao da comunidade.");
+        createInteractionIfMissing(sinalizacao, anaUser, InteractionType.APOIO, null);
+        createInteractionIfMissing(sinalizacao, anaUser, InteractionType.COMENTARIO,
+                "O trecho recebe bastante movimento nos horarios de entrada e saida.");
+        createInteractionIfMissing(sinalizacao, verdeUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(banco, brunoUser, InteractionType.APOIO, null);
+        createInteractionIfMissing(banco, brunoUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(banco, verdeUser, InteractionType.COMENTARIO,
+                "O banco foi recuperado e recebeu acabamento protetor.");
+        createInteractionIfMissing(lixeira, anaUser, InteractionType.COMENTARIO,
+                "Existe outra lixeira em boas condicoes a poucos metros do local.");
+        createInteractionIfMissing(placa, brunoUser, InteractionType.APOIO, null);
+        createInteractionIfMissing(placa, urbanaUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(bebedouro, anaUser, InteractionType.APOIO, null);
+        createInteractionIfMissing(bebedouro, anaUser, InteractionType.CURTIDA, null);
+        createInteractionIfMissing(bebedouro, verdeUser, InteractionType.COMENTARIO,
+                "Uma vistoria pode identificar se o problema esta no registro.");
 
         createServiceIfMissing(calcada, verde, AtendimentoDenunciaStatus.EM_ANDAMENTO,
                 "Nivelar o trecho e substituir as placas danificadas.", null, null);
@@ -95,6 +146,12 @@ public class DevDataSeeder implements CommandLineRunner {
         createServiceIfMissing(vazamento, urbana, AtendimentoDenunciaStatus.CONTESTADO,
                 "Localizar a origem e reparar a tubulacao.", "Tubulacao reparada e area limpa.",
                 "O vazamento voltou a aparecer apos o reparo.");
+        createServiceIfMissing(pichacao, urbana, AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA,
+                "Limpar o muro e aplicar nova pintura resistente.", "Muro limpo e completamente repintado.", null);
+        createServiceIfMissing(sinalizacao, verde, AtendimentoDenunciaStatus.EM_ANDAMENTO,
+                "Isolar o trecho e repintar a faixa com tinta refletiva.", null, null);
+        createServiceIfMissing(banco, verde, AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR,
+                "Substituir as ripas soltas e aplicar acabamento.", "Banco restaurado e liberado para uso.", null);
 
         log.info("Seed de desenvolvimento concluido. Usuarios ficticios usam a senha '{}'.", SHARED_PASSWORD);
     }
