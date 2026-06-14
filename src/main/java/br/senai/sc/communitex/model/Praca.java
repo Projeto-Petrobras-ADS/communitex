@@ -42,6 +42,9 @@ public class Praca {
 
     private Double longitude;
 
+    @Column(name = "poligono_geojson", columnDefinition = "TEXT")
+    private String poligonoGeoJson;
+
     @Size(max = 1000)
     private String descricao;
 

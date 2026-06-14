@@ -62,7 +62,7 @@ class PracaControllerTest {
 
     @Test
     void givenValidPayload_whenCreate_thenReturnsCreated() throws Exception {
-        var request = new PracaRequestDTO("Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", 1000.0, StatusPraca.DISPONIVEL);
+        var request = new PracaRequestDTO("Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, null, "Descricao", 1000.0, StatusPraca.DISPONIVEL);
         var response = new PracaResponseDTO(1L, "Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", null, 1000.0, StatusPraca.DISPONIVEL);
 
         when(pracaService.create(any(PracaRequestDTO.class), nullable(org.springframework.web.multipart.MultipartFile.class))).thenReturn(response);
@@ -98,7 +98,7 @@ class PracaControllerTest {
 
     @Test
     void givenPracaExistente_whenFindByIdWithDetails_thenReturnsOk() throws Exception {
-        var detail = new PracaDetailResponseDTO(1L, "Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", null, 1000.0, StatusPraca.DISPONIVEL, null, List.of());
+        var detail = new PracaDetailResponseDTO(1L, "Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, null, "Descricao", null, 1000.0, StatusPraca.DISPONIVEL, null, List.of());
         when(pracaService.findByIdWithDetails(1L)).thenReturn(detail);
 
         mockMvc.perform(get("/api/pracas/{id}/detalhes", 1L))

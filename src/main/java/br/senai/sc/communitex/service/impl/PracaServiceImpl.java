@@ -15,6 +15,7 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.PracaService;
+import br.senai.sc.communitex.service.PracaGeometryService;
 import br.senai.sc.communitex.service.ArquivoService;
 import br.senai.sc.communitex.util.ArquivoUrls;
 import br.senai.sc.communitex.specification.PracaSpecification;
@@ -39,6 +40,7 @@ public class PracaServiceImpl implements PracaService {
     private final PracaRepository pracaRepository;
     private final PessoaFisicaService pessoaFisicaService;
     private final ArquivoService arquivoService;
+    private final PracaGeometryService geometryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -76,17 +78,19 @@ public class PracaServiceImpl implements PracaService {
     @Transactional
     public PracaResponseDTO create(PracaRequestDTO dto, MultipartFile arquivo) {
         var pessoaFisica = getPessoaFisicaFromAuthenticatedUser();
+        var geometry = geometryService.process(dto.poligono(), dto.latitude(), dto.longitude(), dto.metragemM2());
 
         var praca = Praca.builder()
                 .nome(dto.nome())
                 .logradouro(dto.logradouro())
                 .bairro(dto.bairro())
                 .cidade(dto.cidade())
-                .latitude(dto.latitude())
-                .longitude(dto.longitude())
+                .latitude(geometry.latitude())
+                .longitude(geometry.longitude())
+                .poligonoGeoJson(geometry.polygonGeoJson())
                 .descricao(dto.descricao())
                 .arquivo(salvarImagem(arquivo))
-                .metragemM2(dto.metragemM2())
+                .metragemM2(geometry.metragemM2())
                 .status(StatusPraca.DISPONIVEL)
                 .cadastradoPor(pessoaFisica)
                 .build();
@@ -101,8 +105,14 @@ public class PracaServiceImpl implements PracaService {
     public PracaResponseDTO update(Long id, PracaRequestDTO dto) {
         var praca = pracaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
+        var geometry = geometryService.process(dto.poligono(), dto.latitude(), dto.longitude(), dto.metragemM2());
 
-        BeanUtils.copyProperties(dto, praca, "id", "status", "cadastradoPor", "adocoes", "arquivo");
+        BeanUtils.copyProperties(dto, praca, "id", "status", "cadastradoPor", "adocoes", "arquivo",
+                "latitude", "longitude", "metragemM2", "poligono");
+        praca.setLatitude(geometry.latitude());
+        praca.setLongitude(geometry.longitude());
+        praca.setMetragemM2(geometry.metragemM2());
+        praca.setPoligonoGeoJson(geometry.polygonGeoJson());
 
         log.info("Praça ID: {} atualizada", id);
         return toResponseDTO(pracaRepository.save(praca));
@@ -179,6 +189,7 @@ public class PracaServiceImpl implements PracaService {
                 praca.getCidade(),
                 praca.getLatitude(),
                 praca.getLongitude(),
+                geometryService.readGeoJson(praca.getPoligonoGeoJson()),
                 praca.getDescricao(),
                 ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(),

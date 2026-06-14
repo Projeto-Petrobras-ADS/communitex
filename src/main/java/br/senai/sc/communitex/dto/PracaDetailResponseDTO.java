@@ -4,6 +4,7 @@ package br.senai.sc.communitex.dto;
 import br.senai.sc.communitex.enums.StatusPraca;
 
 import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public record PracaDetailResponseDTO(
         Long id,
@@ -13,6 +14,7 @@ public record PracaDetailResponseDTO(
         String cidade,
         Double latitude,
         Double longitude,
+        JsonNode poligono,
         String descricao,
         String fotoUrl,
         Double metragemM2,
