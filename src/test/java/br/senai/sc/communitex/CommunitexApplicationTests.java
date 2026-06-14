@@ -12,16 +12,21 @@ import br.senai.sc.communitex.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 class CommunitexApplicationTests {
 
 	@Autowired
@@ -54,6 +59,9 @@ class CommunitexApplicationTests {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private MockMvc mockMvc;
+
 	@Test
 	void givenApplicationContext_whenStart_thenLoadsSuccessfully() {
 	}
@@ -81,6 +89,12 @@ class CommunitexApplicationTests {
 		Profile profile = DevDataSeeder.class.getAnnotation(Profile.class);
 
 		assertArrayEquals(new String[]{"dev"}, profile.value());
+	}
+
+	@Test
+	void givenAnonymousVisitor_whenRequestPublicDashboard_thenAllowsAccess() throws Exception {
+		mockMvc.perform(get("/api/dashboard/publico"))
+				.andExpect(status().isOk());
 	}
 
 	private List<Long> repositoryCounts() {

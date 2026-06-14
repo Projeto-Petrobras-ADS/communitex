@@ -80,6 +80,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/empresas").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/pessoas-fisicas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/arquivos/*/conteudo").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/dashboard/publico").permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/h2-console/**",

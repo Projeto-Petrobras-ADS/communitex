@@ -20,6 +20,8 @@ public interface PracaRepository extends JpaRepository<Praca, Long>, JpaSpecific
 
     long countByStatus(StatusPraca status);
 
+    List<Praca> findByStatus(StatusPraca status);
+
     List<Praca> findTop4ByStatusOrderByIdDesc(StatusPraca status);
 
     long countByCadastradoPorId(Long pessoaFisicaId);

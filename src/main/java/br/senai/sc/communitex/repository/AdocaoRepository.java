@@ -14,6 +14,8 @@ import java.util.Collection;
 public interface AdocaoRepository extends JpaRepository<Adocao, Long> {
     List<Adocao> findByStatus(StatusAdocao adocao);
 
+    List<Adocao> findByStatusIn(Collection<StatusAdocao> statuses);
+
     List<Adocao> findByPraca_Id(Long idPraca);
 
     @EntityGraph(attributePaths = {"praca", "empresa"})

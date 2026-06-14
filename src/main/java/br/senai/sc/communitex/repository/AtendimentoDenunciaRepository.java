@@ -18,6 +18,8 @@ public interface AtendimentoDenunciaRepository extends JpaRepository<Atendimento
     @EntityGraph(attributePaths = {"denuncia", "denuncia.autor", "empresa"})
     List<AtendimentoDenuncia> findByEmpresaIdOrderByDataAceiteDesc(Long empresaId);
 
+    List<AtendimentoDenuncia> findByStatusNot(AtendimentoDenunciaStatus status);
+
     long countByEmpresaIdAndStatus(Long empresaId, AtendimentoDenunciaStatus status);
 
     long countByDenunciaAutorIdAndStatus(Long autorId, AtendimentoDenunciaStatus status);
