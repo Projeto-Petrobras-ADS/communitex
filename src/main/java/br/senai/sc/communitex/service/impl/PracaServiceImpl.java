@@ -6,7 +6,6 @@ import br.senai.sc.communitex.dto.PracaDetailResponseDTO;
 import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
-import br.senai.sc.communitex.dto.PracaFotoDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.BusinessException;
 import br.senai.sc.communitex.exception.ForbiddenException;
@@ -16,6 +15,8 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.PracaService;
+import br.senai.sc.communitex.service.ArquivoService;
+import br.senai.sc.communitex.util.ArquivoUrls;
 import br.senai.sc.communitex.specification.PracaSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.Set;
 import java.util.List;
 
 @Service
@@ -37,11 +36,9 @@ import java.util.List;
 @Slf4j
 public class PracaServiceImpl implements PracaService {
 
-    private static final long MAX_FOTO_SIZE = 5 * 1024 * 1024;
-    private static final Set<String> FOTO_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
-
     private final PracaRepository pracaRepository;
     private final PessoaFisicaService pessoaFisicaService;
+    private final ArquivoService arquivoService;
 
     @Override
     @Transactional(readOnly = true)
@@ -77,7 +74,7 @@ public class PracaServiceImpl implements PracaService {
 
     @Override
     @Transactional
-    public PracaResponseDTO create(PracaRequestDTO dto) {
+    public PracaResponseDTO create(PracaRequestDTO dto, MultipartFile arquivo) {
         var pessoaFisica = getPessoaFisicaFromAuthenticatedUser();
 
         var praca = Praca.builder()
@@ -88,7 +85,7 @@ public class PracaServiceImpl implements PracaService {
                 .latitude(dto.latitude())
                 .longitude(dto.longitude())
                 .descricao(dto.descricao())
-                .fotoUrl(dto.fotoUrl())
+                .arquivo(salvarImagem(arquivo))
                 .metragemM2(dto.metragemM2())
                 .status(StatusPraca.DISPONIVEL)
                 .cadastradoPor(pessoaFisica)
@@ -105,40 +102,10 @@ public class PracaServiceImpl implements PracaService {
         var praca = pracaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
 
-        BeanUtils.copyProperties(dto, praca, "id", "status", "cadastradoPor", "adocoes");
+        BeanUtils.copyProperties(dto, praca, "id", "status", "cadastradoPor", "adocoes", "arquivo");
 
         log.info("Praça ID: {} atualizada", id);
         return toResponseDTO(pracaRepository.save(praca));
-    }
-
-    @Override
-    @Transactional
-    public void updateFoto(Long id, MultipartFile arquivo) {
-        validarFoto(arquivo);
-        var praca = pracaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Praca nao encontrada com ID: " + id));
-
-        try {
-            praca.setFoto(arquivo.getBytes());
-            praca.setFotoContentType(arquivo.getContentType());
-            praca.setFotoNomeOriginal(arquivo.getOriginalFilename());
-            praca.setFotoUrl(null);
-            pracaRepository.save(praca);
-        } catch (IOException ex) {
-            throw new BusinessException("Nao foi possivel processar a imagem enviada", ex);
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PracaFotoDTO findFoto(Long id) {
-        var praca = pracaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Praca nao encontrada com ID: " + id));
-
-        if (praca.getFoto() == null || praca.getFoto().length == 0) {
-            throw new ResourceNotFoundException("A praca nao possui foto cadastrada");
-        }
-        return new PracaFotoDTO(praca.getFoto(), praca.getFotoContentType(), praca.getFotoNomeOriginal());
     }
 
     @Override
@@ -177,7 +144,7 @@ public class PracaServiceImpl implements PracaService {
                 praca.getLatitude(),
                 praca.getLongitude(),
                 praca.getDescricao(),
-                resolveFotoUrl(praca),
+                ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(),
                 praca.getStatus()
         );
@@ -213,7 +180,7 @@ public class PracaServiceImpl implements PracaService {
                 praca.getLatitude(),
                 praca.getLongitude(),
                 praca.getDescricao(),
-                resolveFotoUrl(praca),
+                ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(),
                 praca.getStatus(),
                 cadastradoPorDTO,
@@ -221,21 +188,9 @@ public class PracaServiceImpl implements PracaService {
         );
     }
 
-    private String resolveFotoUrl(Praca praca) {
-        return praca.getFoto() != null && praca.getFoto().length > 0
-                ? "/api/pracas/" + praca.getId() + "/foto"
-                : praca.getFotoUrl();
+    private br.senai.sc.communitex.model.Arquivo salvarImagem(MultipartFile arquivo) {
+        if (arquivo == null || arquivo.isEmpty()) return null;
+        return arquivoService.salvarImagem(arquivo);
     }
 
-    private void validarFoto(MultipartFile arquivo) {
-        if (arquivo == null || arquivo.isEmpty()) {
-            throw new BusinessException("Selecione uma imagem para enviar");
-        }
-        if (arquivo.getSize() > MAX_FOTO_SIZE) {
-            throw new BusinessException("A imagem deve ter no maximo 5 MB");
-        }
-        if (!FOTO_CONTENT_TYPES.contains(arquivo.getContentType())) {
-            throw new BusinessException("Formato invalido. Envie uma imagem JPEG, PNG ou WebP");
-        }
-    }
 }

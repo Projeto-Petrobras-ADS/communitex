@@ -8,6 +8,8 @@ import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
+import br.senai.sc.communitex.service.ArquivoService;
+import br.senai.sc.communitex.model.Arquivo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,9 @@ class PracaServiceImplTest {
     @Mock
     private PessoaFisicaService pessoaFisicaService;
 
+    @Mock
+    private ArquivoService arquivoService;
+
     @InjectMocks
     private PracaServiceImpl pracaService;
 
@@ -61,7 +66,7 @@ class PracaServiceImplTest {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
             "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
+            "Descrição teste", 2500.0, StatusPraca.DISPONIVEL
         );
 
         PessoaFisica pessoaFisica = new PessoaFisica();
@@ -77,7 +82,7 @@ class PracaServiceImplTest {
         when(pessoaFisicaService.findByUsuarioUsername("testuser")).thenReturn(pessoaFisica);
         when(pracaRepository.save(any(Praca.class))).thenReturn(savedPraca);
 
-        PracaResponseDTO response = pracaService.create(requestDTO);
+        PracaResponseDTO response = pracaService.create(requestDTO, null);
 
         assertNotNull(response);
         assertEquals(savedPraca.getId(), response.id());
@@ -91,10 +96,10 @@ class PracaServiceImplTest {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
             "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
+            "Descrição teste", 2500.0, StatusPraca.DISPONIVEL
         );
 
-        assertThrows(Exception.class, () -> pracaService.create(requestDTO));
+        assertThrows(Exception.class, () -> pracaService.create(requestDTO, null));
     }
 
     @Test
@@ -166,7 +171,7 @@ class PracaServiceImplTest {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Atualizada", "Rua Nova", "Bairro Novo",
             "Cidade Nova", -23.123, -46.123,
-            "Nova descrição", "http://nova-foto.jpg", 3000.0, StatusPraca.ADOTADA
+            "Nova descrição", 3000.0, StatusPraca.ADOTADA
         );
 
         Praca existingPraca = new Praca();
@@ -188,7 +193,7 @@ class PracaServiceImplTest {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
             "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
+            "Descrição teste", 2500.0, StatusPraca.DISPONIVEL
         );
 
         when(pracaRepository.findById(id)).thenReturn(Optional.empty());
@@ -214,29 +219,6 @@ class PracaServiceImplTest {
         verify(pracaRepository, never()).deleteById(any());
     }
 
-    @Test
-    void givenImagemValida_whenUpdateFoto_thenSalvaConteudoNoBanco() {
-        var praca = new Praca();
-        praca.setId(1L);
-        var arquivo = new MockMultipartFile("arquivo", "praca.png", "image/png", new byte[]{1, 2, 3});
-        when(pracaRepository.findById(1L)).thenReturn(Optional.of(praca));
-
-        pracaService.updateFoto(1L, arquivo);
-
-        assertEquals("image/png", praca.getFotoContentType());
-        assertEquals("praca.png", praca.getFotoNomeOriginal());
-        assertEquals(3, praca.getFoto().length);
-        verify(pracaRepository).save(praca);
-    }
-
-    @Test
-    void givenImagemComFormatoInvalido_whenUpdateFoto_thenRejeitaArquivo() {
-        var arquivo = new MockMultipartFile("arquivo", "arquivo.txt", "text/plain", new byte[]{1});
-
-        assertThrows(br.senai.sc.communitex.exception.BusinessException.class,
-                () -> pracaService.updateFoto(1L, arquivo));
-        verify(pracaRepository, never()).findById(any());
-    }
 }
 
 

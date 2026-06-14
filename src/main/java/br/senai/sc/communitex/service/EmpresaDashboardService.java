@@ -1,28 +1,25 @@
 package br.senai.sc.communitex.service;
 
-import br.senai.sc.communitex.dto.DenunciaResponseDTO;
 import br.senai.sc.communitex.dto.EmpresaDashboardDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.dto.PropostaEmpresaDTO;
-import br.senai.sc.communitex.enums.InteractionType;
+import br.senai.sc.communitex.dto.ReparoEmpresaResumoDTO;
 import br.senai.sc.communitex.enums.AtendimentoDenunciaStatus;
-import br.senai.sc.communitex.enums.IssueStatus;
 import br.senai.sc.communitex.enums.StatusAdocao;
 import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.model.Adocao;
-import br.senai.sc.communitex.model.Denuncia;
-import br.senai.sc.communitex.model.DenunciaInteracao;
+import br.senai.sc.communitex.model.AtendimentoDenuncia;
 import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
-import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import br.senai.sc.communitex.util.ArquivoUrls;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -36,22 +33,22 @@ public class EmpresaDashboardService {
 
     private static final Set<StatusAdocao> STATUS_EM_ANALISE = Set.of(StatusAdocao.PROPOSTA, StatusAdocao.EM_ANALISE);
     private static final Set<StatusAdocao> STATUS_ADOTADA = Set.of(StatusAdocao.APROVADA, StatusAdocao.CONCLUIDA);
+    private static final Set<AtendimentoDenunciaStatus> STATUS_REPAROS_ATIVOS = Set.of(
+            AtendimentoDenunciaStatus.ACEITO,
+            AtendimentoDenunciaStatus.EM_ANDAMENTO,
+            AtendimentoDenunciaStatus.CONTESTADO
+    );
 
     private final EmpresaRepository empresaRepository;
     private final PracaRepository pracaRepository;
     private final AdocaoRepository adocaoRepository;
-    private final DenunciaRepository denunciaRepository;
     private final AtendimentoDenunciaRepository atendimentoRepository;
 
     @Transactional(readOnly = true)
     public EmpresaDashboardDTO obterDashboard() {
         var empresa = getEmpresaFromAuthenticatedUser();
-        var usuario = empresa.getUsuarioRepresentante();
-        if (usuario == null) {
-            throw new ForbiddenException("A empresa autenticada nao possui usuario representante associado");
-        }
         var propostas = adocaoRepository.findByEmpresaId(empresa.getId());
-        var denuncias = denunciaRepository.findByAutorId(usuario.getId());
+        var reparos = atendimentoRepository.findByEmpresaIdOrderByDataAceiteDesc(empresa.getId());
 
         var propostasEmAnalise = countPropostas(propostas, STATUS_EM_ANALISE);
         var propostasAprovadas = countPropostas(propostas, STATUS_ADOTADA);
@@ -68,10 +65,6 @@ public class EmpresaDashboardService {
                 .filter(proposta -> !proposta.getDataFim().isBefore(LocalDate.now()))
                 .filter(proposta -> !proposta.getDataFim().isAfter(LocalDate.now().plusDays(30)))
                 .count();
-        var totalApoios = denuncias.stream()
-                .flatMap(denuncia -> interactions(denuncia).stream())
-                .filter(interacao -> interacao.getTipo() == InteractionType.APOIO)
-                .count();
         var taxaAprovacao = propostas.isEmpty()
                 ? 0
                 : Math.round((propostasAprovadas * 1000.0) / propostas.size()) / 10.0;
@@ -84,28 +77,32 @@ public class EmpresaDashboardService {
                 propostasAprovadas,
                 propostasRejeitadas,
                 propostasAprovadas,
-                denunciaRepository.countByAutorId(usuario.getId()),
-                denunciaRepository.countByAutorIdAndStatus(usuario.getId(), IssueStatus.RESOLVIDA),
-                totalApoios,
                 areaTotal,
                 taxaAprovacao,
                 proximasDoFim,
-                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.EM_ANDAMENTO),
-                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA),
-                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR),
-                atendimentoRepository.countByEmpresaIdAndStatus(empresa.getId(), AtendimentoDenunciaStatus.CONTESTADO),
+                reparos.size(),
+                countReparos(reparos, STATUS_REPAROS_ATIVOS),
+                countReparos(reparos, Set.of(AtendimentoDenunciaStatus.ACEITO)),
+                countReparos(reparos, Set.of(AtendimentoDenunciaStatus.EM_ANDAMENTO)),
+                countReparos(reparos, Set.of(AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA)),
+                countReparos(reparos, Set.of(AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR)),
+                countReparos(reparos, Set.of(AtendimentoDenunciaStatus.CONTESTADO)),
                 pracaRepository.findTop4ByStatusOrderByIdDesc(StatusPraca.DISPONIVEL).stream().map(this::toPracaDTO).toList(),
                 propostas.stream()
                         .sorted(Comparator.comparing(Adocao::getDataInicio, Comparator.nullsLast(Comparator.reverseOrder())))
                         .limit(5)
                         .map(this::toPropostaDTO)
                         .toList(),
-                denunciaRepository.findTop5ByAutorIdOrderByDataCriacaoDesc(usuario.getId()).stream().map(this::toDenunciaDTO).toList()
+                reparos.stream().limit(5).map(this::toReparoResumoDTO).toList()
         );
     }
 
     private long countPropostas(List<Adocao> propostas, Set<StatusAdocao> statuses) {
         return propostas.stream().filter(proposta -> statuses.contains(proposta.getStatus())).count();
+    }
+
+    private long countReparos(List<AtendimentoDenuncia> reparos, Set<AtendimentoDenunciaStatus> statuses) {
+        return reparos.stream().filter(reparo -> statuses.contains(reparo.getStatus())).count();
     }
 
     private Empresa getEmpresaFromAuthenticatedUser() {
@@ -134,7 +131,7 @@ public class EmpresaDashboardService {
     private PracaResponseDTO toPracaDTO(br.senai.sc.communitex.model.Praca praca) {
         return new PracaResponseDTO(
                 praca.getId(), praca.getNome(), praca.getLogradouro(), praca.getBairro(), praca.getCidade(),
-                praca.getLatitude(), praca.getLongitude(), praca.getDescricao(), praca.getFotoUrl(),
+                praca.getLatitude(), praca.getLongitude(), praca.getDescricao(), ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(), praca.getStatus()
         );
     }
@@ -147,18 +144,16 @@ public class EmpresaDashboardService {
         );
     }
 
-    private DenunciaResponseDTO toDenunciaDTO(Denuncia denuncia) {
-        var interacoes = interactions(denuncia);
-        var apoios = interacoes.stream().filter(interacao -> interacao.getTipo() == InteractionType.APOIO).count();
-        var autor = denuncia.getAutor();
-        return new DenunciaResponseDTO(
-                denuncia.getId(), denuncia.getTitulo(), denuncia.getDescricao(), denuncia.getLatitude(), denuncia.getLongitude(),
-                denuncia.getFotoUrl(), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
-                autor.getNome() != null ? autor.getNome() : autor.getUsername(), interacoes.size(), (int) apoios
+    private ReparoEmpresaResumoDTO toReparoResumoDTO(AtendimentoDenuncia reparo) {
+        return new ReparoEmpresaResumoDTO(
+                reparo.getId(),
+                reparo.getDenuncia().getId(),
+                reparo.getDenuncia().getTitulo(),
+                reparo.getStatus(),
+                reparo.getDataAceite(),
+                reparo.getDataInicio(),
+                reparo.getDataConclusaoEmpresa(),
+                reparo.getDataConfirmacaoAutor()
         );
-    }
-
-    private List<DenunciaInteracao> interactions(Denuncia denuncia) {
-        return denuncia.getInteracoes() != null ? denuncia.getInteracoes() : List.of();
     }
 }

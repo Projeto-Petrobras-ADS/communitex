@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.concurrent.TimeUnit;
@@ -80,10 +81,12 @@ public class PracaController {
     @ApiResponse(responseCode = "201", description = "Praça criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @ApiResponse(responseCode = "403", description = "Acesso negado - apenas pessoas físicas podem cadastrar praças")
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public PracaResponseDTO create(@Valid @RequestBody PracaRequestDTO dto) {
-        return pracaService.create(dto);
+    public PracaResponseDTO create(
+            @Valid @RequestPart("dados") PracaRequestDTO dto,
+            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo) {
+        return pracaService.create(dto, arquivo);
     }
 
     @Operation(summary = "Atualizar praça existente")
@@ -93,25 +96,6 @@ public class PracaController {
     @PreAuthorize("@authz.isPracaOwnerOrAdmin(#id)")
     public PracaResponseDTO update(@PathVariable Long id, @Valid @RequestBody PracaRequestDTO dto) {
         return pracaService.update(id, dto);
-    }
-
-    @Operation(summary = "Enviar ou substituir a foto da praca")
-    @PutMapping(value = "/{id}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("@authz.isPracaOwnerOrAdmin(#id)")
-    public void updateFoto(@PathVariable Long id, @RequestParam("arquivo") MultipartFile arquivo) {
-        pracaService.updateFoto(id, arquivo);
-    }
-
-    @Operation(summary = "Exibir a foto da praca")
-    @GetMapping("/{id}/foto")
-    public ResponseEntity<byte[]> findFoto(@PathVariable Long id) {
-        var foto = pracaService.findFoto(id);
-        var contentType = foto.contentType() == null ? MediaType.APPLICATION_OCTET_STREAM : MediaType.parseMediaType(foto.contentType());
-        return ResponseEntity.ok()
-                .contentType(contentType)
-                .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic())
-                .body(foto.conteudo());
     }
 
     @Operation(summary = "Excluir praça")

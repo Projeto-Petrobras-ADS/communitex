@@ -1,12 +1,8 @@
 package br.senai.sc.communitex.config;
 
-import br.senai.sc.communitex.model.Usuario;
-import br.senai.sc.communitex.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -26,7 +22,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-
 
 @Configuration
 @EnableMethodSecurity
@@ -84,7 +79,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/empresas").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/pessoas-fisicas").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/pracas/*/foto").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/arquivos/*/conteudo").permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/h2-console/**",
@@ -100,20 +95,5 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
-    }
-
-    @Bean
-    @Profile("dev")
-    public CommandLineRunner devAdminSeeder(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
-        return args -> {
-            if (repository.findByUsername("admin").isEmpty()) {
-                Usuario admin = new Usuario();
-                admin.setUsername("admin");
-                admin.setPassword(passwordEncoder.encode("password"));
-                admin.setRole("ROLE_ADMIN");
-                repository.save(admin);
-                System.out.println("Usuário admin criado!");
-            }
-        };
     }
 }

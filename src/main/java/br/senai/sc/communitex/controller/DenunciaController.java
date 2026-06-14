@@ -28,6 +28,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -48,11 +51,13 @@ public class DenunciaController {
     @ApiResponse(responseCode = "201", description = "Denúncia criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @ApiResponse(responseCode = "409", description = "Já existe uma denúncia similar próxima")
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public DenunciaResponseDTO create(@Valid @RequestBody DenunciaRequestDTO dto) {
-        return issueService.criar(dto);
+    public DenunciaResponseDTO create(
+            @Valid @RequestPart("dados") DenunciaRequestDTO dto,
+            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo) {
+        return issueService.criar(dto, arquivo);
     }
 
     @Operation(summary = "Listar todas as denúncias")

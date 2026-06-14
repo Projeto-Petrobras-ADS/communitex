@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -38,10 +41,13 @@ public class AtendimentoDenunciaController {
         return service.iniciar(id);
     }
 
-    @PostMapping("/issues/{id}/atendimento/concluir")
+    @PostMapping(value = "/issues/{id}/atendimento/concluir", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('EMPRESA')")
-    public AtendimentoDenunciaResponseDTO concluir(@PathVariable Long id, @Valid @RequestBody ConcluirAtendimentoRequestDTO request) {
-        return service.concluir(id, request);
+    public AtendimentoDenunciaResponseDTO concluir(
+            @PathVariable Long id,
+            @Valid @RequestPart("dados") ConcluirAtendimentoRequestDTO request,
+            @RequestPart(value = "arquivo", required = false) MultipartFile arquivo) {
+        return service.concluir(id, request, arquivo);
     }
 
     @PostMapping("/issues/{id}/atendimento/confirmar")

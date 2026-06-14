@@ -25,6 +25,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import br.senai.sc.communitex.util.ArquivoUrls;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,6 +42,7 @@ public class AtendimentoDenunciaService {
     private final DenunciaRepository denunciaRepository;
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ArquivoService arquivoService;
 
     @Transactional
     public AtendimentoDenunciaResponseDTO assumir(Long denunciaId, AssumirAtendimentoRequestDTO request) {
@@ -76,12 +79,12 @@ public class AtendimentoDenunciaService {
     }
 
     @Transactional
-    public AtendimentoDenunciaResponseDTO concluir(Long denunciaId, ConcluirAtendimentoRequestDTO request) {
+    public AtendimentoDenunciaResponseDTO concluir(Long denunciaId, ConcluirAtendimentoRequestDTO request, MultipartFile arquivo) {
         var atendimento = managedAtendimento(denunciaId);
         requireStatus(atendimento, AtendimentoDenunciaStatus.EM_ANDAMENTO);
         atendimento.setStatus(AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA);
         atendimento.setDescricaoReparo(request.descricaoReparo().trim());
-        atendimento.setFotoDepoisUrl(blankToNull(request.fotoDepoisUrl()));
+        atendimento.setArquivo(arquivoService.salvarImagem(arquivo));
         atendimento.setDataConclusaoEmpresa(LocalDateTime.now());
         atendimento.getDenuncia().setStatus(IssueStatus.AGUARDANDO_CONFIRMACAO);
         denunciaRepository.save(atendimento.getDenuncia());
@@ -202,7 +205,7 @@ public class AtendimentoDenunciaService {
         return new AtendimentoDenunciaResponseDTO(
                 atendimento.getId(), denuncia.getId(), denuncia.getTitulo(), empresa.getId(), empresaNome,
                 atendimento.getStatus(), atendimento.getDescricaoPlanejada(), atendimento.getDescricaoReparo(),
-                atendimento.getFotoDepoisUrl(), atendimento.getMotivoContestacao(), atendimento.getDataAceite(),
+                ArquivoUrls.url(atendimento.getArquivo()), atendimento.getMotivoContestacao(), atendimento.getDataAceite(),
                 atendimento.getDataInicio(), atendimento.getDataConclusaoEmpresa(), atendimento.getDataConfirmacaoAutor(),
                 podeGerenciar, podeConfirmar
         );
@@ -214,7 +217,7 @@ public class AtendimentoDenunciaService {
         var autor = denuncia.getAutor();
         return new DenunciaResponseDTO(
                 denuncia.getId(), denuncia.getTitulo(), denuncia.getDescricao(), denuncia.getLatitude(), denuncia.getLongitude(),
-                denuncia.getFotoUrl(), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
+                ArquivoUrls.url(denuncia.getArquivo()), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
                 autor.getNome() != null ? autor.getNome() : autor.getUsername(), interacoes.size(), (int) apoios
         );
     }

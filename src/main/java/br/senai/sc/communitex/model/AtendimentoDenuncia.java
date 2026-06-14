@@ -52,8 +52,9 @@ public class AtendimentoDenuncia {
     @Column(name = "descricao_reparo", length = 2000)
     private String descricaoReparo;
 
-    @Column(name = "foto_depois_url", length = 500)
-    private String fotoDepoisUrl;
+    @OneToOne(cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "arquivo_id")
+    private Arquivo arquivo;
 
     @Column(name = "motivo_contestacao", length = 2000)
     private String motivoContestacao;

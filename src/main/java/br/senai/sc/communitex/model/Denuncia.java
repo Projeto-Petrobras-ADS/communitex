@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -51,8 +52,9 @@ public class Denuncia {
     @Column(nullable = false)
     private Double longitude;
 
-    @Column(length = 500)
-    private String fotoUrl;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "arquivo_id")
+    private Arquivo arquivo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -20,17 +20,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -52,7 +55,7 @@ class IssueControllerTest {
 
     @Test
         void dadoPedidoValidoAoCriar_deveRetornarCriado() throws Exception {
-        var request = new DenunciaRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, null, IssueType.BURACO);
+        var request = new DenunciaRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, IssueType.BURACO);
         var response = new DenunciaResponseDTO(
                 1L,
                 "Buraco",
@@ -69,11 +72,10 @@ class IssueControllerTest {
                 0
         );
 
-        when(issueService.criar(any(DenunciaRequestDTO.class))).thenReturn(response);
+        when(issueService.criar(any(DenunciaRequestDTO.class), nullable(org.springframework.web.multipart.MultipartFile.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/issues")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/api/issues")
+                        .file(jsonPart("dados", objectMapper.writeValueAsString(request))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.titulo").value("Buraco"));
@@ -91,23 +93,20 @@ class IssueControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/issues")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidPayload))
+        mockMvc.perform(multipart("/api/issues").file(jsonPart("dados", invalidPayload)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
         void dadaDenunciaDuplicadaAoCriar_deveRetornarConflict() throws Exception {
-        var request = new DenunciaRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, null, IssueType.BURACO);
+        var request = new DenunciaRequestDTO("Buraco", "Buraco perigoso", -27.6, -48.5, IssueType.BURACO);
 
-        when(issueService.criar(any(DenunciaRequestDTO.class)))
+        when(issueService.criar(any(DenunciaRequestDTO.class), nullable(org.springframework.web.multipart.MultipartFile.class)))
                 .thenThrow(new DuplicateIssueException("Já existe denúncia similar"));
 
-        mockMvc.perform(post("/api/issues")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/api/issues")
+                        .file(jsonPart("dados", objectMapper.writeValueAsString(request))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
     }
@@ -175,6 +174,9 @@ class IssueControllerTest {
                         .content("{\"status\":\"EM_ANALISE\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("EM_ANALISE"));
+    }
+    private MockMultipartFile jsonPart(String name, String json) {
+        return new MockMultipartFile(name, "", MediaType.APPLICATION_JSON_VALUE, json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }
 

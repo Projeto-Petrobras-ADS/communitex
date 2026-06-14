@@ -74,6 +74,19 @@ Executar com H2 (padrão):
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
+Ao iniciar com o profile `dev`, a aplicação cria dados fictícios para facilitar testes locais. O seed é
+idempotente, roda somente no H2 de desenvolvimento e preserva dados existentes entre reinícios.
+
+Todos os usuários fictícios usam a senha `password`:
+
+| Perfil | Usuário |
+|--------|---------|
+| Administrador | `admin` |
+| Cidadão | `ana.souza@exemplo.com` |
+| Cidadão | `bruno.lima@exemplo.com` |
+| Empresa | `contato@verdevida.com.br` |
+| Empresa | `contato@urbanasolucoes.com.br` |
+
 Executar com PostgreSQL via Docker:
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local-postgres

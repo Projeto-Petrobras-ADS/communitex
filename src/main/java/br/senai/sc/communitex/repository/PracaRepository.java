@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PracaRepository extends JpaRepository<Praca, Long>, JpaSpecificationExecutor<Praca> {
 
@@ -26,5 +27,7 @@ public interface PracaRepository extends JpaRepository<Praca, Long>, JpaSpecific
     long countByCadastradoPorIdAndStatus(Long pessoaFisicaId, StatusPraca status);
 
     List<Praca> findTop5ByCadastradoPorIdOrderByIdDesc(Long pessoaFisicaId);
+
+    Optional<Praca> findByNomeAndCidade(String nome, String cidade);
 }
 

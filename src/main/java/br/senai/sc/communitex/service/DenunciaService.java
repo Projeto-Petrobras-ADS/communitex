@@ -8,12 +8,13 @@ import br.senai.sc.communitex.dto.DenunciaResponseDTO;
 import br.senai.sc.communitex.enums.IssueStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface DenunciaService {
 
-    DenunciaResponseDTO criar(DenunciaRequestDTO dto);
+    DenunciaResponseDTO criar(DenunciaRequestDTO dto, MultipartFile arquivo);
 
     DenunciaResponseDTO buscarPorId(Long id);
 

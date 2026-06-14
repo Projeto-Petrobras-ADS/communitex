@@ -10,18 +10,18 @@ public record EmpresaDashboardDTO(
         long propostasAprovadas,
         long propostasRejeitadas,
         long pracasAdotadas,
-        long denunciasRealizadas,
-        long denunciasResolvidas,
-        long totalApoiosRecebidos,
         double areaTotalAdotadaM2,
         double taxaAprovacao,
         long adocoesProximasDoFim,
+        long totalReparos,
+        long reparosAtivos,
+        long reparosAceitos,
         long reparosEmAndamento,
         long reparosAguardandoConfirmacao,
         long reparosConfirmados,
         long reparosContestados,
         List<PracaResponseDTO> pracasRecomendadas,
         List<PropostaEmpresaDTO> propostasRecentes,
-        List<DenunciaResponseDTO> denunciasRecentes
+        List<ReparoEmpresaResumoDTO> reparosRecentes
 ) {
 }

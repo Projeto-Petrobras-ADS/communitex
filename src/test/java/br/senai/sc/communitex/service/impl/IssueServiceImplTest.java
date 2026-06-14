@@ -15,6 +15,7 @@ import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.DenunciaInteracaoRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.UsuarioRepository;
+import br.senai.sc.communitex.service.ArquivoService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,11 +51,14 @@ class IssueServiceImplTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private ArquivoService arquivoService;
+
     private DenunciaServiceImpl issueService;
 
     @BeforeEach
     void setUp() {
-        issueService = new DenunciaServiceImpl(issueRepository, interactionRepository, usuarioRepository, Optional.empty());
+        issueService = new DenunciaServiceImpl(issueRepository, interactionRepository, usuarioRepository, arquivoService);
     }
 
     @AfterEach
@@ -81,9 +85,8 @@ class IssueServiceImplTest {
                 "Existe um buraco perigoso",
                 -27.5969,
                 -48.5495,
-                null,
                 IssueType.BURACO
-        ));
+        ), null);
 
         assertEquals(99L, response.id());
         assertEquals(IssueStatus.ABERTA, response.status());
@@ -103,9 +106,8 @@ class IssueServiceImplTest {
                 "Existe um buraco perigoso",
                 -27.5969,
                 -48.5495,
-                null,
                 IssueType.BURACO
-        )));
+        ), null));
 
         verify(issueRepository, never()).save(any());
     }
@@ -124,9 +126,8 @@ class IssueServiceImplTest {
                 "Muito perto",
                 -27.5969,
                 -48.5495,
-                null,
                 IssueType.BURACO
-        )));
+        ), null));
 
         verify(issueRepository, never()).save(any());
     }
@@ -321,7 +322,7 @@ class IssueServiceImplTest {
                 .longitude(longitude)
                 .status(status)
                 .tipo(IssueType.BURACO)
-                .fotoUrl(null)
+                .arquivo(null)
                 .autor(autor)
                 .interacoes(List.of())
                 .dataCriacao(LocalDateTime.now())

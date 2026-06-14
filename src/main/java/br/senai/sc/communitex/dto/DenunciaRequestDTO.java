@@ -20,9 +20,6 @@ public record DenunciaRequestDTO(
     @NotNull(message = "A longitude é obrigatória")
     Double longitude,
 
-    @Size(max = 500, message = "A URL da foto deve ter no máximo 500 caracteres")
-    String fotoUrl,
-
     @NotNull(message = "O tipo da denúncia é obrigatório")
     IssueType tipo
 ) {}

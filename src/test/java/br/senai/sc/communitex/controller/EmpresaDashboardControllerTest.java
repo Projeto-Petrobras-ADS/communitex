@@ -33,7 +33,7 @@ class EmpresaDashboardControllerTest {
     @Test
     void givenEmpresa_whenObterDashboard_thenReturnsAggregatedData() throws Exception {
         when(dashboardService.obterDashboard()).thenReturn(new EmpresaDashboardDTO(
-                "Empresa Verde", 12, 4, 1, 2, 1, 2, 3, 1, 8, 2500, 50, 1, 1, 1, 2, 0,
+                "Empresa Verde", 12, 4, 1, 2, 1, 2, 2500, 50, 1, 6, 3, 1, 1, 1, 1, 1,
                 List.of(), List.of(), List.of()
         ));
 
@@ -41,6 +41,8 @@ class EmpresaDashboardControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.empresaNome").value("Empresa Verde"))
                 .andExpect(jsonPath("$.pracasDisponiveis").value(12))
+                .andExpect(jsonPath("$.reparosAtivos").value(3))
+                .andExpect(jsonPath("$.denunciasRealizadas").doesNotExist())
                 .andExpect(jsonPath("$.taxaAprovacao").value(50));
     }
 }

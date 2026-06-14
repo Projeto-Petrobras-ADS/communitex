@@ -11,7 +11,6 @@ import br.senai.sc.communitex.exception.BusinessException;
 import br.senai.sc.communitex.exception.DuplicateIssueException;
 import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
-import br.senai.sc.communitex.gateway.PhotoStorageGateway;
 import br.senai.sc.communitex.model.Denuncia;
 import br.senai.sc.communitex.model.DenunciaInteracao;
 import br.senai.sc.communitex.model.Usuario;
@@ -19,6 +18,8 @@ import br.senai.sc.communitex.repository.DenunciaInteracaoRepository;
 import br.senai.sc.communitex.repository.DenunciaRepository;
 import br.senai.sc.communitex.repository.UsuarioRepository;
 import br.senai.sc.communitex.service.DenunciaService;
+import br.senai.sc.communitex.service.ArquivoService;
+import br.senai.sc.communitex.util.ArquivoUrls;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,9 +28,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,11 +44,11 @@ public class DenunciaServiceImpl implements DenunciaService {
     private final DenunciaRepository issueRepository;
     private final DenunciaInteracaoRepository interactionRepository;
     private final UsuarioRepository usuarioRepository;
-    private final Optional<PhotoStorageGateway> photoStorageGateway;
+    private final ArquivoService arquivoService;
 
     @Override
     @Transactional
-    public DenunciaResponseDTO criar(DenunciaRequestDTO dto) {
+    public DenunciaResponseDTO criar(DenunciaRequestDTO dto, MultipartFile arquivo) {
         var autor = getAuthenticatedUser();
 
         if ("ROLE_EMPRESA".equals(autor.getRole())) {
@@ -61,7 +62,7 @@ public class DenunciaServiceImpl implements DenunciaService {
                 .descricao(dto.descricao())
                 .latitude(dto.latitude())
                 .longitude(dto.longitude())
-                .fotoUrl(dto.fotoUrl())
+                .arquivo(arquivo == null || arquivo.isEmpty() ? null : arquivoService.salvarImagem(arquivo))
                 .tipo(dto.tipo())
                 .status(IssueStatus.ABERTA)
                 .autor(autor)
@@ -286,7 +287,7 @@ public class DenunciaServiceImpl implements DenunciaService {
                 issue.getDescricao(),
                 issue.getLatitude(),
                 issue.getLongitude(),
-                issue.getFotoUrl(),
+                ArquivoUrls.url(issue.getArquivo()),
                 issue.getStatus(),
                 issue.getTipo(),
                 issue.getDataCriacao(),
@@ -310,7 +311,7 @@ public class DenunciaServiceImpl implements DenunciaService {
                 issue.getDescricao(),
                 issue.getLatitude(),
                 issue.getLongitude(),
-                issue.getFotoUrl(),
+                ArquivoUrls.url(issue.getArquivo()),
                 issue.getStatus(),
                 issue.getTipo(),
                 issue.getDataCriacao(),

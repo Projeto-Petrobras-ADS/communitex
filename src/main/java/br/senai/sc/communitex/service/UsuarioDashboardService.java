@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import br.senai.sc.communitex.util.ArquivoUrls;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -99,7 +100,7 @@ public class UsuarioDashboardService {
     private PracaResponseDTO toPracaDTO(br.senai.sc.communitex.model.Praca praca) {
         return new PracaResponseDTO(
                 praca.getId(), praca.getNome(), praca.getLogradouro(), praca.getBairro(), praca.getCidade(),
-                praca.getLatitude(), praca.getLongitude(), praca.getDescricao(), praca.getFotoUrl(),
+                praca.getLatitude(), praca.getLongitude(), praca.getDescricao(), ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(), praca.getStatus()
         );
     }
@@ -110,7 +111,7 @@ public class UsuarioDashboardService {
         var autor = denuncia.getAutor();
         return new DenunciaResponseDTO(
                 denuncia.getId(), denuncia.getTitulo(), denuncia.getDescricao(), denuncia.getLatitude(), denuncia.getLongitude(),
-                denuncia.getFotoUrl(), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
+                ArquivoUrls.url(denuncia.getArquivo()), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
                 autor.getNome() != null ? autor.getNome() : autor.getUsername(), interacoes.size(), (int) apoios
         );
     }

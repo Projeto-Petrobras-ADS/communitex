@@ -16,16 +16,19 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,14 +62,13 @@ class PracaControllerTest {
 
     @Test
     void givenValidPayload_whenCreate_thenReturnsCreated() throws Exception {
-        var request = new PracaRequestDTO("Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", null, 1000.0, StatusPraca.DISPONIVEL);
+        var request = new PracaRequestDTO("Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", 1000.0, StatusPraca.DISPONIVEL);
         var response = new PracaResponseDTO(1L, "Praca Central", "Rua A", "Centro", "Floripa", -27.6, -48.5, "Descricao", null, 1000.0, StatusPraca.DISPONIVEL);
 
-        when(pracaService.create(any(PracaRequestDTO.class))).thenReturn(response);
+        when(pracaService.create(any(PracaRequestDTO.class), nullable(org.springframework.web.multipart.MultipartFile.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/pracas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/api/pracas")
+                        .file(jsonPart("dados", objectMapper.writeValueAsString(request))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L));
     }
@@ -80,9 +82,7 @@ class PracaControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/pracas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidPayload))
+        mockMvc.perform(multipart("/api/pracas").file(jsonPart("dados", invalidPayload)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }
@@ -112,6 +112,9 @@ class PracaControllerTest {
 
         mockMvc.perform(delete("/api/pracas/{id}", 1L))
                 .andExpect(status().isNoContent());
+    }
+    private MockMultipartFile jsonPart(String name, String json) {
+        return new MockMultipartFile(name, "", MediaType.APPLICATION_JSON_VALUE, json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }
 
