@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 
 @Component
-@Profile("dev")
+@Profile({"dev", "local-postgres"})
 @RequiredArgsConstructor
 @Slf4j
 public class DevDataSeeder implements CommandLineRunner {
