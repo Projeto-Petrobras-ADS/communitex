@@ -8,6 +8,10 @@ import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
+import br.senai.sc.communitex.service.ArquivoService;
+import br.senai.sc.communitex.service.PracaGeometryService;
+import br.senai.sc.communitex.model.Arquivo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,14 +45,20 @@ class PracaServiceImplTest {
     @Mock
     private PessoaFisicaService pessoaFisicaService;
 
-    @InjectMocks
+    @Mock
+    private ArquivoService arquivoService;
+
     private PracaServiceImpl pracaService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
         // Setup SecurityContext mock for authenticated user
-        var authentication = new UsernamePasswordAuthenticationToken("testuser", "password");
+        var authentication = UsernamePasswordAuthenticationToken.authenticated("testuser", "password", List.of());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        pracaService = new PracaServiceImpl(pracaRepository, pessoaFisicaService, arquivoService,
+                new PracaGeometryService(objectMapper));
     }
 
     @AfterEach
@@ -59,8 +70,8 @@ class PracaServiceImplTest {
     void givenUsuarioAutenticado_whenCreate_thenCriaPraca() {
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
-            "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
+            "Cidade Teste", -23.123, -46.123, null,
+            "Descrição teste", 2500.0, StatusPraca.DISPONIVEL
         );
 
         PessoaFisica pessoaFisica = new PessoaFisica();
@@ -76,7 +87,7 @@ class PracaServiceImplTest {
         when(pessoaFisicaService.findByUsuarioUsername("testuser")).thenReturn(pessoaFisica);
         when(pracaRepository.save(any(Praca.class))).thenReturn(savedPraca);
 
-        PracaResponseDTO response = pracaService.create(requestDTO);
+        PracaResponseDTO response = pracaService.create(requestDTO, null);
 
         assertNotNull(response);
         assertEquals(savedPraca.getId(), response.id());
@@ -89,11 +100,11 @@ class PracaServiceImplTest {
         SecurityContextHolder.clearContext();
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
-            "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
+            "Cidade Teste", -23.123, -46.123, null,
+            "Descrição teste", 2500.0, StatusPraca.DISPONIVEL
         );
 
-        assertThrows(Exception.class, () -> pracaService.create(requestDTO));
+        assertThrows(Exception.class, () -> pracaService.create(requestDTO, null));
     }
 
     @Test
@@ -128,6 +139,9 @@ class PracaServiceImplTest {
         praca.setId(id);
         praca.setNome("Praça Detalhada");
         praca.setDescricao("Uma praça com detalhes");
+        praca.setPoligonoGeoJson("""
+                {"type":"Polygon","coordinates":[[[-48.5,-27.6],[-48.49,-27.6],[-48.49,-27.59],[-48.5,-27.6]]]}
+                """);
 
         when(pracaRepository.findById(id)).thenReturn(Optional.of(praca));
 
@@ -136,6 +150,7 @@ class PracaServiceImplTest {
         assertNotNull(response);
         assertEquals(id, response.id());
         assertEquals("Praça Detalhada", response.nome());
+        assertEquals("Polygon", response.poligono().path("type").asText());
     }
 
     @Test
@@ -164,8 +179,8 @@ class PracaServiceImplTest {
         Long id = 1L;
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Atualizada", "Rua Nova", "Bairro Novo",
-            "Cidade Nova", -23.123, -46.123,
-            "Nova descrição", "http://nova-foto.jpg", 3000.0, StatusPraca.ADOTADA
+            "Cidade Nova", -23.123, -46.123, null,
+            "Nova descrição", 3000.0, StatusPraca.ADOTADA
         );
 
         Praca existingPraca = new Praca();
@@ -186,8 +201,8 @@ class PracaServiceImplTest {
         Long id = 1L;
         PracaRequestDTO requestDTO = new PracaRequestDTO(
             "Praça Teste", "Rua Teste", "Bairro Teste",
-            "Cidade Teste", -23.123, -46.123,
-            "Descrição teste", "http://foto.jpg", 2500.0, StatusPraca.DISPONIVEL
+            "Cidade Teste", -23.123, -46.123, null,
+            "Descrição teste", 2500.0, StatusPraca.DISPONIVEL
         );
 
         when(pracaRepository.findById(id)).thenReturn(Optional.empty());
@@ -212,6 +227,7 @@ class PracaServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> pracaService.delete(id));
         verify(pracaRepository, never()).deleteById(any());
     }
+
 }
 
 

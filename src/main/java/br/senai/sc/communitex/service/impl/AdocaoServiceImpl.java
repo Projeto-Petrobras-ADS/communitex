@@ -4,7 +4,9 @@ import br.senai.sc.communitex.dto.InteresseAdocaoRequestDTO;
 import br.senai.sc.communitex.dto.InteresseAdocaoResponseDTO;
 import br.senai.sc.communitex.dto.PropostaEmpresaDTO;
 import br.senai.sc.communitex.enums.StatusAdocao;
+import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.exception.ForbiddenException;
+import br.senai.sc.communitex.exception.BusinessException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.model.Empresa;
@@ -12,23 +14,30 @@ import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import br.senai.sc.communitex.enums.NotificationChannel;
 import br.senai.sc.communitex.service.IAdocaoService;
 import br.senai.sc.communitex.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AdocaoServiceImpl implements IAdocaoService {
+
+    private static final Set<StatusAdocao> STATUS_ATIVOS = Set.of(
+            StatusAdocao.PROPOSTA,
+            StatusAdocao.EM_ANALISE,
+            StatusAdocao.APROVADA,
+            StatusAdocao.CONCLUIDA
+    );
 
     private final AdocaoRepository adocaoRepository;
     private final PracaRepository pracaRepository;
@@ -47,11 +56,17 @@ public class AdocaoServiceImpl implements IAdocaoService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Praça não encontrada com ID: " + requestDTO.pracaId()));
 
+        if (praca.getStatus() != null && praca.getStatus() != StatusPraca.DISPONIVEL) {
+            throw new BusinessException("Esta praça não está disponível para novas propostas");
+        }
+
+        if (adocaoRepository.existsByEmpresaIdAndPracaIdAndStatusIn(empresa.getId(), praca.getId(), STATUS_ATIVOS)) {
+            throw new BusinessException("Sua empresa já possui uma proposta ativa para esta praça");
+        }
+
         var responsavel = praca.getCadastradoPor();
         if (responsavel == null) {
-            log.warn("Praça {} não possui pessoa física cadastrante", praca.getId());
-            throw new ResourceNotFoundException(
-                    "Não foi possível identificar o responsável pela praça");
+            log.warn("Praça {} não possui pessoa física cadastrante; proposta será salva sem notificação", praca.getId());
         }
 
         var adocao = Adocao.builder()
@@ -64,7 +79,9 @@ public class AdocaoServiceImpl implements IAdocaoService {
 
         var adocaoSalva = adocaoRepository.save(adocao);
 
-        notificationService.notificarInteresseAdocao(responsavel, empresa, praca, requestDTO.proposta(), NotificationChannel.EMAIL);
+        if (responsavel != null) {
+            notificationService.notificarInteresseAdocao(responsavel, empresa, praca, requestDTO.proposta(), NotificationChannel.EMAIL);
+        }
 
         log.info("Interesse de adoção registrado com sucesso - ID: {}", adocaoSalva.getId());
 
@@ -89,18 +106,8 @@ public class AdocaoServiceImpl implements IAdocaoService {
 
 
     private Empresa getEmpresaFromAuthenticatedUser() {
-        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String str) {
-            username = str;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
-        return empresaRepository.findByUsuarioRepresentanteUsername(username)
+        var username = AuthenticatedUser.username();
+        return empresaRepository.buscarPorUsuarioRepresentanteUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuário autenticado: " + username));
     }
 

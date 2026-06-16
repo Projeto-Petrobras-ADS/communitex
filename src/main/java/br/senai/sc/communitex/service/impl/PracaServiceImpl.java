@@ -7,21 +7,25 @@ import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
-import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import br.senai.sc.communitex.service.PessoaFisicaService;
 import br.senai.sc.communitex.service.PracaService;
+import br.senai.sc.communitex.service.PracaGeometryService;
+import br.senai.sc.communitex.service.ArquivoService;
+import br.senai.sc.communitex.util.ArquivoUrls;
 import br.senai.sc.communitex.specification.PracaSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,6 +36,8 @@ public class PracaServiceImpl implements PracaService {
 
     private final PracaRepository pracaRepository;
     private final PessoaFisicaService pessoaFisicaService;
+    private final ArquivoService arquivoService;
+    private final PracaGeometryService geometryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,6 +45,13 @@ public class PracaServiceImpl implements PracaService {
         return pracaRepository.findAll(PracaSpecification.comFiltros(pesquisaDTO)).stream()
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PracaResponseDTO> findAll(PracaPesquisaDTO pesquisaDTO, Pageable pageable) {
+        return pracaRepository.findAll(PracaSpecification.comFiltros(pesquisaDTO), pageable)
+                .map(this::toResponseDTO);
     }
 
     @Override
@@ -60,19 +73,21 @@ public class PracaServiceImpl implements PracaService {
 
     @Override
     @Transactional
-    public PracaResponseDTO create(PracaRequestDTO dto) {
+    public PracaResponseDTO create(PracaRequestDTO dto, MultipartFile arquivo) {
         var pessoaFisica = getPessoaFisicaFromAuthenticatedUser();
+        var geometry = geometryService.process(dto.poligono(), dto.latitude(), dto.longitude(), dto.metragemM2());
 
         var praca = Praca.builder()
                 .nome(dto.nome())
                 .logradouro(dto.logradouro())
                 .bairro(dto.bairro())
                 .cidade(dto.cidade())
-                .latitude(dto.latitude())
-                .longitude(dto.longitude())
+                .latitude(geometry.latitude())
+                .longitude(geometry.longitude())
+                .poligonoGeoJson(geometry.polygonGeoJson())
                 .descricao(dto.descricao())
-                .fotoUrl(dto.fotoUrl())
-                .metragemM2(dto.metragemM2())
+                .arquivo(salvarImagem(arquivo))
+                .metragemM2(geometry.metragemM2())
                 .status(StatusPraca.DISPONIVEL)
                 .cadastradoPor(pessoaFisica)
                 .build();
@@ -87,8 +102,14 @@ public class PracaServiceImpl implements PracaService {
     public PracaResponseDTO update(Long id, PracaRequestDTO dto) {
         var praca = pracaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Praça não encontrada com ID: " + id));
+        var geometry = geometryService.process(dto.poligono(), dto.latitude(), dto.longitude(), dto.metragemM2());
 
-        BeanUtils.copyProperties(dto, praca, "id", "cadastradoPor", "adocoes");
+        BeanUtils.copyProperties(dto, praca, "id", "status", "cadastradoPor", "adocoes", "arquivo",
+                "latitude", "longitude", "metragemM2", "poligono");
+        praca.setLatitude(geometry.latitude());
+        praca.setLongitude(geometry.longitude());
+        praca.setMetragemM2(geometry.metragemM2());
+        praca.setPoligonoGeoJson(geometry.polygonGeoJson());
 
         log.info("Praça ID: {} atualizada", id);
         return toResponseDTO(pracaRepository.save(praca));
@@ -106,18 +127,7 @@ public class PracaServiceImpl implements PracaService {
 
 
     private PessoaFisica getPessoaFisicaFromAuthenticatedUser() {
-        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String str) {
-            username = str;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
-        return pessoaFisicaService.findByUsuarioUsername(username);
+        return pessoaFisicaService.findByUsuarioUsername(AuthenticatedUser.username());
     }
 
     private PracaResponseDTO toResponseDTO(Praca praca) {
@@ -130,7 +140,7 @@ public class PracaServiceImpl implements PracaService {
                 praca.getLatitude(),
                 praca.getLongitude(),
                 praca.getDescricao(),
-                praca.getFotoUrl(),
+                ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(),
                 praca.getStatus()
         );
@@ -149,10 +159,10 @@ public class PracaServiceImpl implements PracaService {
             );
         }
 
-        var historico = praca.getAdocoes().stream()
+        var historico = (praca.getAdocoes() == null ? List.<br.senai.sc.communitex.model.Adocao>of() : praca.getAdocoes()).stream()
                 .map(adocao -> new AdocaoHistoricoDTO(
-                        adocao.getEmpresa().getId(),
-                        adocao.getEmpresa().getRazaoSocial(),
+                        adocao.getEmpresa() != null ? adocao.getEmpresa().getId() : null,
+                        adocao.getEmpresa() != null ? adocao.getEmpresa().getRazaoSocial() : null,
                         adocao.getDescricaoProjeto()
                 ))
                 .toList();
@@ -165,12 +175,19 @@ public class PracaServiceImpl implements PracaService {
                 praca.getCidade(),
                 praca.getLatitude(),
                 praca.getLongitude(),
+                geometryService.readGeoJson(praca.getPoligonoGeoJson()),
                 praca.getDescricao(),
-                praca.getFotoUrl(),
+                ArquivoUrls.url(praca.getArquivo()),
                 praca.getMetragemM2(),
                 praca.getStatus(),
                 cadastradoPorDTO,
                 historico
         );
     }
+
+    private br.senai.sc.communitex.model.Arquivo salvarImagem(MultipartFile arquivo) {
+        if (arquivo == null || arquivo.isEmpty()) return null;
+        return arquivoService.salvarImagem(arquivo);
+    }
+
 }

@@ -52,6 +52,8 @@ class EmpresaServiceImplTest {
         empresa.setNomeFantasia("Tech Soluções");
         empresa.setEmail("contato@tech.com");
         empresa.setTelefone("48999999999");
+        empresa.setUsuarioRepresentante(Usuario.builder()
+                .id(10L).username("joao@tech.com").password("hash").role("ROLE_EMPRESA").build());
 
         RepresentanteEmpresa representante = new RepresentanteEmpresa();
         representante.setId(1L);
@@ -75,10 +77,10 @@ class EmpresaServiceImplTest {
     void givenEmpresasCadastradas_whenFindAll_thenRetornaLista() {
         when(empresaRepository.findAll()).thenReturn(List.of(empresa));
 
-        List<EmpresaResponseDTO> result = empresaService.findAll();
+        List<EmpresaResponseDTO> result = empresaService.listarTodas();
 
         assertEquals(1, result.size());
-        assertEquals("Tech Soluções LTDA", result.get(0).nomeSocial());
+        assertEquals("Tech Soluções LTDA", result.get(0).razaoSocial());
         verify(empresaRepository, times(1)).findAll();
     }
 
@@ -86,7 +88,7 @@ class EmpresaServiceImplTest {
     void givenEmpresaExistente_whenFindById_thenRetornaEmpresa() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
 
-        EmpresaResponseDTO response = empresaService.findById(1L);
+        EmpresaResponseDTO response = empresaService.buscarPorId(1L);
 
         assertEquals("Tech Soluções", response.nomeFantasia());
         verify(empresaRepository, times(1)).findById(1L);
@@ -96,13 +98,13 @@ class EmpresaServiceImplTest {
     void givenEmpresaInexistente_whenFindById_thenLancaResourceNotFoundException() {
         when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> empresaService.findById(99L));
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.buscarPorId(99L));
         verify(empresaRepository, times(1)).findById(99L);
     }
 
     @Test
     void givenDadosValidos_whenCreate_thenCriaEmpresa() {
-        when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.empty());
+        when(empresaRepository.buscarPorCnpj(anyString())).thenReturn(Optional.empty());
         when(usuarioService.findByUsername(anyString())).thenReturn(Optional.empty());
 
         Usuario usuarioMock = new Usuario();
@@ -115,7 +117,7 @@ class EmpresaServiceImplTest {
         when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioMock);
         when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
-        EmpresaResponseDTO response = empresaService.create(requestDTO);
+        EmpresaResponseDTO response = empresaService.criar(requestDTO);
 
         assertEquals("Tech Soluções", response.nomeFantasia());
         assertEquals("12345678000199", response.cnpj());
@@ -125,29 +127,33 @@ class EmpresaServiceImplTest {
 
     @Test
     void givenCnpjExistente_whenCreate_thenLancaBusinessException() {
-        when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.of(empresa));
+        when(empresaRepository.buscarPorCnpj(anyString())).thenReturn(Optional.of(empresa));
 
-        assertThrows(BusinessException.class, () -> empresaService.create(requestDTO));
+        assertThrows(BusinessException.class, () -> empresaService.criar(requestDTO));
         verify(empresaRepository, never()).save(any(Empresa.class));
     }
 
     @Test
     void givenEmailRepresentanteExistente_whenCreate_thenLancaBusinessException() {
-        when(empresaRepository.findByCnpj(anyString())).thenReturn(Optional.empty());
+        when(empresaRepository.buscarPorCnpj(anyString())).thenReturn(Optional.empty());
         when(usuarioService.findByUsername(anyString())).thenReturn(Optional.of(new Usuario()));
 
-        assertThrows(BusinessException.class, () -> empresaService.create(requestDTO));
+        assertThrows(BusinessException.class, () -> empresaService.criar(requestDTO));
         verify(empresaRepository, never()).save(any(Empresa.class));
     }
 
     @Test
     void givenEmpresaExistente_whenUpdate_thenAtualizaEmpresa() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        when(passwordEncoder.encode("senha123")).thenReturn("nova-senha");
+        when(usuarioService.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(empresaRepository.save(any(Empresa.class))).thenReturn(empresa);
 
-        EmpresaResponseDTO response = empresaService.update(1L, requestDTO);
+        EmpresaResponseDTO response = empresaService.atualizar(1L, requestDTO);
 
         assertEquals("Tech Soluções", response.nomeFantasia());
+        assertEquals("joao@tech.com", empresa.getUsuarioRepresentante().getUsername());
+        assertEquals("nova-senha", empresa.getUsuarioRepresentante().getPassword());
         verify(empresaRepository, times(1)).save(any(Empresa.class));
     }
 
@@ -155,14 +161,14 @@ class EmpresaServiceImplTest {
     void givenEmpresaInexistente_whenUpdate_thenLancaResourceNotFoundException() {
         when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> empresaService.update(99L, requestDTO));
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.atualizar(99L, requestDTO));
     }
 
     @Test
     void givenEmpresaExistente_whenDelete_thenRemoveEmpresa() {
         when(empresaRepository.existsById(1L)).thenReturn(true);
 
-        assertDoesNotThrow(() -> empresaService.delete(1L));
+        assertDoesNotThrow(() -> empresaService.excluir(1L));
         verify(empresaRepository, times(1)).deleteById(1L);
     }
 
@@ -170,7 +176,7 @@ class EmpresaServiceImplTest {
     void givenEmpresaInexistente_whenDelete_thenLancaResourceNotFoundException() {
         when(empresaRepository.existsById(99L)).thenReturn(false);
 
-        assertThrows(ResourceNotFoundException.class, () -> empresaService.delete(99L));
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.excluir(99L));
         verify(empresaRepository, times(1)).existsById(99L);
     }
 
@@ -178,7 +184,7 @@ class EmpresaServiceImplTest {
     void givenEmpresaExistente_whenFindEntityById_thenRetornaEntity() {
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
 
-        Empresa result = empresaService.findEntityById(1L);
+        Empresa result = empresaService.buscarEntidadePorId(1L);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
@@ -189,7 +195,7 @@ class EmpresaServiceImplTest {
     void givenEmpresaInexistente_whenFindEntityById_thenLancaResourceNotFoundException() {
         when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> empresaService.findEntityById(99L));
+        assertThrows(ResourceNotFoundException.class, () -> empresaService.buscarEntidadePorId(99L));
     }
 }
 

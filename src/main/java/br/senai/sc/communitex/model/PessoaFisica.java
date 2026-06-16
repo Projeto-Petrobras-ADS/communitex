@@ -49,6 +49,14 @@ public class PessoaFisica {
     @Pattern(regexp = "\\d{10,11}", message = "Telefone inválido! Use o formato (99) 99999-9999")
     private String telefone;
 
+    private String cep;
+    private String logradouro;
+    private String numero;
+    private String complemento;
+    private String bairro;
+    private String cidade;
+    private String estado;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     @JsonIgnore

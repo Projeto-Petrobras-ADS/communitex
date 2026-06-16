@@ -42,10 +42,15 @@ public class Praca {
 
     private Double longitude;
 
+    @Column(name = "poligono_geojson", columnDefinition = "TEXT")
+    private String poligonoGeoJson;
+
     @Size(max = 1000)
     private String descricao;
 
-    private String fotoUrl;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "arquivo_id")
+    private Arquivo arquivo;
 
     @Column(name = "metragem_m2", nullable = false)
     private Double metragemM2;
@@ -63,4 +68,5 @@ public class Praca {
     @JoinColumn(name = "cadastrado_por_id")
     @JsonIgnore
     private PessoaFisica cadastradoPor;
+
 }

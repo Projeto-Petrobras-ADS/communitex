@@ -14,10 +14,9 @@ import br.senai.sc.communitex.model.Empresa;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PracaRepository;
+import br.senai.sc.communitex.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -156,6 +155,19 @@ public class AdocaoService {
     }
 
     @Transactional
+    public AdocaoResponseDTO updateStatus(Long id, StatusAdocao status) {
+        var adocao = adocaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("AdoÃ§Ã£o nÃ£o encontrada com ID: " + id));
+
+        adocao.setStatus(status);
+        atualizarStatusPraca(adocao.getPraca(), status);
+        pracaRepository.save(adocao.getPraca());
+
+        log.info("Status da adoÃ§Ã£o ID: {} atualizado para: {}", id, status);
+        return toResponseDTO(adocaoRepository.save(adocao));
+    }
+
+    @Transactional
     public void delete(Long id) {
         if (!adocaoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Adoção não encontrada com ID: " + id);
@@ -182,18 +194,8 @@ public class AdocaoService {
 
 
     private Empresa getEmpresaFromAuthenticatedUser() {
-        var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else if (principal instanceof String str) {
-            username = str;
-        } else {
-            throw new ForbiddenException("Usuário autenticado não encontrado no contexto");
-        }
-
-        return empresaRepository.findByUsuarioRepresentanteUsername(username)
+        var username = AuthenticatedUser.username();
+        return empresaRepository.buscarPorUsuarioRepresentanteUsername(username)
                 .orElseThrow(() -> new ForbiddenException("Nenhuma empresa associada ao usuário autenticado: " + username));
     }
 
@@ -212,8 +214,11 @@ public class AdocaoService {
                 adocao.getDataFim(),
                 adocao.getDescricaoProjeto(),
                 adocao.getStatus(),
-                adocao.getEmpresa(),
-                adocao.getPraca()
+                adocao.getEmpresa() != null ? adocao.getEmpresa().getId() : null,
+                adocao.getEmpresa() != null ? adocao.getEmpresa().getNomeFantasia() : null,
+                adocao.getPraca() != null ? adocao.getPraca().getId() : null,
+                adocao.getPraca() != null ? adocao.getPraca().getNome() : null,
+                adocao.getPraca() != null ? adocao.getPraca().getCidade() : null
         );
     }
 }

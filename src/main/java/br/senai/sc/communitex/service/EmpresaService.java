@@ -8,15 +8,15 @@ import java.util.List;
 
 public interface EmpresaService {
 
-    Empresa findEntityById(Long id);
+    Empresa buscarEntidadePorId(Long id);
 
-    List<EmpresaResponseDTO> findAll();
+    List<EmpresaResponseDTO> listarTodas();
 
-    EmpresaResponseDTO findById(Long id);
+    EmpresaResponseDTO buscarPorId(Long id);
 
-    EmpresaResponseDTO create(EmpresaRequestDTO dto);
+    EmpresaResponseDTO criar(EmpresaRequestDTO dto);
 
-    EmpresaResponseDTO update(Long id, EmpresaRequestDTO dto);
+    EmpresaResponseDTO atualizar(Long id, EmpresaRequestDTO dto);
 
-    void delete(Long id);
+    void excluir(Long id);
 }

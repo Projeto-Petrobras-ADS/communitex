@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,22 +33,22 @@ class EmpresaControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private EmpresaService empresaService;
+        @MockBean
+        private EmpresaService empresaService;
 
-    @MockitoBean
-    private JwtService jwtService;
+        @MockBean
+        private JwtService jwtService;
 
     @Test
     void givenEmpresasCadastradas_whenFindAll_thenReturnsOk() throws Exception {
-        when(empresaService.findAll()).thenReturn(List.of(
+        when(empresaService.listarTodas()).thenReturn(List.of(
                 new EmpresaResponseDTO(1L, "Tech LTDA", "12345678000199", "Tech", "contato@tech.com", "48999990000", null, List.of())
         ));
 
         mockMvc.perform(get("/api/empresas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].nomeSocial").value("Tech LTDA"));
+                .andExpect(jsonPath("$[0].razaoSocial").value("Tech LTDA"));
     }
 
     @Test
@@ -73,7 +73,7 @@ class EmpresaControllerTest {
 
     @Test
     void givenEmpresaInexistente_whenFindById_thenReturnsNotFound() throws Exception {
-        when(empresaService.findById(99L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada"));
+        when(empresaService.buscarPorId(99L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada"));
 
         mockMvc.perform(get("/api/empresas/{id}", 99L))
                 .andExpect(status().isNotFound())
@@ -96,7 +96,7 @@ class EmpresaControllerTest {
 
         var response = new EmpresaResponseDTO(1L, "Tech LTDA", "12345678000199", "Tech", "contato@tech.com", "48999990000", null, List.of());
 
-        when(empresaService.create(any(EmpresaRequestDTO.class))).thenReturn(response);
+        when(empresaService.criar(any(EmpresaRequestDTO.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/empresas")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -82,6 +82,17 @@ class RabbitMQNotificationServiceImplTest {
         ));
     }
 
+    @Test
+    void givenCamposOpcionaisNulos_whenNotificarInteresseAdocao_thenPublicaSemNullPointer() {
+        var responsavel = pessoaFisica(10L, null, "murilo@email.com");
+        var empresa = empresa(20L, null, null);
+        var praca = praca(30L, "Praca Central");
+
+        assertDoesNotThrow(() -> notificationService.notificarInteresseAdocao(
+                responsavel, empresa, praca, null, NotificationChannel.EMAIL
+        ));
+    }
+
     private PessoaFisica pessoaFisica(Long id, String nome, String email) {
         var pessoa = new PessoaFisica();
         pessoa.setId(id);

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,16 +33,18 @@ public class EmpresaController {
     @Operation(summary = "Listar todas as empresas")
     @ApiResponse(responseCode = "200", description = "Lista de empresas retornada com sucesso")
     @GetMapping
-    public List<EmpresaResponseDTO> findAll() {
-        return empresaService.findAll();
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<EmpresaResponseDTO> listarTodas() {
+        return empresaService.listarTodas();
     }
 
     @Operation(summary = "Buscar empresa por ID")
     @ApiResponse(responseCode = "200", description = "Empresa encontrada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @GetMapping("/{id}")
-    public EmpresaResponseDTO findById(@PathVariable Long id) {
-        return empresaService.findById(id);
+    @PreAuthorize("@authz.isEmpresaOwnerOrAdmin(#id)")
+    public EmpresaResponseDTO buscarPorId(@PathVariable Long id) {
+        return empresaService.buscarPorId(id);
     }
 
     @Operation(summary = "Criar nova empresa")
@@ -49,16 +52,17 @@ public class EmpresaController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EmpresaResponseDTO create(@Valid @RequestBody EmpresaRequestDTO dto) {
-        return empresaService.create(dto);
+    public EmpresaResponseDTO criar(@Valid @RequestBody EmpresaRequestDTO dto) {
+        return empresaService.criar(dto);
     }
 
     @Operation(summary = "Atualizar empresa existente")
     @ApiResponse(responseCode = "200", description = "Empresa atualizada com sucesso")
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @PutMapping("/{id}")
-    public EmpresaResponseDTO update(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO dto) {
-        return empresaService.update(id, dto);
+    @PreAuthorize("@authz.isEmpresaOwnerOrAdmin(#id)")
+    public EmpresaResponseDTO atualizar(@PathVariable Long id, @Valid @RequestBody EmpresaRequestDTO dto) {
+        return empresaService.atualizar(id, dto);
     }
 
     @Operation(summary = "Excluir empresa")
@@ -66,7 +70,8 @@ public class EmpresaController {
     @ApiResponse(responseCode = "404", description = "Empresa não encontrada")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        empresaService.delete(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public void excluir(@PathVariable Long id) {
+        empresaService.excluir(id);
     }
 }

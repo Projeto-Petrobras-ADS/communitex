@@ -1,32 +1,14 @@
 package br.senai.sc.communitex.dto;
 
+import jakarta.validation.constraints.NotBlank;
 
-public class RegisterRequest {
-    private String username;
-    private String password;
-    private String role;
+public record RegisterRequest(
+        @NotBlank(message = "O username é obrigatório")
+        String username,
 
-    public String getUsername() {
-        return username;
-    }
+        @NotBlank(message = "A senha é obrigatória")
+        String password,
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
+        String role
+) {
 }

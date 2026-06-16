@@ -65,7 +65,7 @@ class AdocaoServiceImplTest {
         var responsavel = pessoaFisica(30L, "Murilo", "murilo@email.com");
         var praca = praca(20L, "Praca Central", responsavel);
 
-        when(empresaRepository.findByUsuarioRepresentanteUsername("empresa@communitex.com"))
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com"))
                 .thenReturn(Optional.of(empresa));
         when(pracaRepository.findById(20L)).thenReturn(Optional.of(praca));
         when(adocaoRepository.save(any(Adocao.class))).thenAnswer(invocation -> {
@@ -87,7 +87,7 @@ class AdocaoServiceImplTest {
     void givenPracaInexistente_whenRegistrarInteresse_thenLancaResourceNotFoundException() {
         authenticate("empresa@communitex.com");
 
-        when(empresaRepository.findByUsuarioRepresentanteUsername("empresa@communitex.com"))
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com"))
                 .thenReturn(Optional.of(empresa(10L, "Empresa Teste")));
         when(pracaRepository.findById(77L)).thenReturn(Optional.empty());
 
@@ -99,19 +99,51 @@ class AdocaoServiceImplTest {
     }
 
     @Test
-    void givenPracaSemResponsavel_whenRegistrarInteresse_thenLancaResourceNotFoundException() {
+    void givenPracaSemResponsavel_whenRegistrarInteresse_thenCriaPropostaSemNotificar() {
         authenticate("empresa@communitex.com");
 
         var empresa = empresa(10L, "Empresa Teste");
         var pracaSemResponsavel = praca(20L, "Praca Sem Responsavel", null);
 
-        when(empresaRepository.findByUsuarioRepresentanteUsername("empresa@communitex.com"))
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com"))
                 .thenReturn(Optional.of(empresa));
         when(pracaRepository.findById(20L)).thenReturn(Optional.of(pracaSemResponsavel));
+        when(adocaoRepository.save(any(Adocao.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThrows(ResourceNotFoundException.class,
-                () -> adocaoService.registrarInteresse(new InteresseAdocaoRequestDTO(20L, "Projeto")));
+        assertDoesNotThrow(
+                () -> adocaoService.registrarInteresse(new InteresseAdocaoRequestDTO(20L, "Projeto de revitalizacao")));
 
+        verify(adocaoRepository).save(any());
+        verify(notificationService, never()).notificarInteresseAdocao(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void givenPropostaAtivaDaMesmaEmpresa_whenRegistrarInteresse_thenRejeitaDuplicada() {
+        authenticate("empresa@communitex.com");
+        var empresa = empresa(10L, "Empresa Teste");
+        var praca = praca(20L, "Praca Central", pessoaFisica(30L, "Murilo", "murilo@email.com"));
+
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com")).thenReturn(Optional.of(empresa));
+        when(pracaRepository.findById(20L)).thenReturn(Optional.of(praca));
+        when(adocaoRepository.existsByEmpresaIdAndPracaIdAndStatusIn(eq(10L), eq(20L), any())).thenReturn(true);
+
+        assertThrows(br.senai.sc.communitex.exception.BusinessException.class,
+                () -> adocaoService.registrarInteresse(new InteresseAdocaoRequestDTO(20L, "Projeto de revitalizacao")));
+        verify(adocaoRepository, never()).save(any());
+    }
+
+    @Test
+    void givenPracaIndisponivel_whenRegistrarInteresse_thenRejeitaProposta() {
+        authenticate("empresa@communitex.com");
+        var empresa = empresa(10L, "Empresa Teste");
+        var praca = praca(20L, "Praca Central", pessoaFisica(30L, "Murilo", "murilo@email.com"));
+        praca.setStatus(br.senai.sc.communitex.enums.StatusPraca.ADOTADA);
+
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com")).thenReturn(Optional.of(empresa));
+        when(pracaRepository.findById(20L)).thenReturn(Optional.of(praca));
+
+        assertThrows(br.senai.sc.communitex.exception.BusinessException.class,
+                () -> adocaoService.registrarInteresse(new InteresseAdocaoRequestDTO(20L, "Projeto de revitalizacao")));
         verify(adocaoRepository, never()).save(any());
     }
 
@@ -131,7 +163,7 @@ class AdocaoServiceImplTest {
                 .dataInicio(LocalDate.now())
                 .build();
 
-        when(empresaRepository.findByUsuarioRepresentanteUsername("empresa@communitex.com"))
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com"))
                 .thenReturn(Optional.of(empresa));
         when(adocaoRepository.findByEmpresaId(10L)).thenReturn(List.of(adocao));
 
@@ -146,7 +178,7 @@ class AdocaoServiceImplTest {
     void givenUsuarioSemEmpresa_whenListarPropostas_thenLancaForbiddenException() {
         authenticate("sem-empresa@communitex.com");
 
-        when(empresaRepository.findByUsuarioRepresentanteUsername("sem-empresa@communitex.com"))
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("sem-empresa@communitex.com"))
                 .thenReturn(Optional.empty());
 
         assertThrows(ForbiddenException.class, () -> adocaoService.listarPropostasMinhasEmpresa());
@@ -155,7 +187,7 @@ class AdocaoServiceImplTest {
     @Test
     void givenPrincipalInvalido_whenListarPropostas_thenLancaForbiddenException() {
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(new Object(), "N/A")
+                UsernamePasswordAuthenticationToken.authenticated(new Object(), "N/A", List.of())
         );
 
         assertThrows(ForbiddenException.class, () -> adocaoService.listarPropostasMinhasEmpresa());
@@ -169,7 +201,7 @@ class AdocaoServiceImplTest {
         var responsavel = pessoaFisica(30L, "Murilo", "murilo@email.com");
         var praca = praca(20L, "Praca Central", responsavel);
 
-        when(empresaRepository.findByUsuarioRepresentanteUsername("empresa@communitex.com"))
+        when(empresaRepository.buscarPorUsuarioRepresentanteUsername("empresa@communitex.com"))
                 .thenReturn(Optional.of(empresa));
         when(pracaRepository.findById(20L)).thenReturn(Optional.of(praca));
         when(adocaoRepository.save(any(Adocao.class))).thenReturn(
@@ -188,7 +220,7 @@ class AdocaoServiceImplTest {
 
     private void authenticate(String username) {
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(username, "secret")
+                UsernamePasswordAuthenticationToken.authenticated(username, "secret", List.of())
         );
     }
 

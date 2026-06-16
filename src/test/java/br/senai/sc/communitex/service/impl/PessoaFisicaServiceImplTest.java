@@ -56,7 +56,7 @@ class PessoaFisicaServiceImplTest {
                 "senha123"
         );
 
-        when(pessoaFisicaRepository.findByCpf("123.456.789-01")).thenReturn(Optional.empty());
+        when(pessoaFisicaRepository.findByCpf("12345678901")).thenReturn(Optional.empty());
         when(pessoaFisicaRepository.findByEmail("murilo@email.com")).thenReturn(Optional.empty());
         when(usuarioService.findByUsername("murilo@email.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("senha123")).thenReturn("senha-hash");
@@ -117,8 +117,11 @@ class PessoaFisicaServiceImplTest {
         );
 
         when(pessoaFisicaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(pessoaFisicaRepository.findByCpf("987.654.321-00")).thenReturn(Optional.empty());
+        when(pessoaFisicaRepository.findByCpf("98765432100")).thenReturn(Optional.empty());
         when(pessoaFisicaRepository.findByEmail("novo@email.com")).thenReturn(Optional.empty());
+        when(usuarioService.findByUsername("novo@email.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("senha-nao-usada")).thenReturn("nova-senha-hash");
+        when(usuarioService.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0, Usuario.class));
         when(pessoaFisicaRepository.save(any(PessoaFisica.class))).thenAnswer(invocation -> invocation.getArgument(0, PessoaFisica.class));
 
         var response = pessoaFisicaService.update(1L, dto);
@@ -127,6 +130,8 @@ class PessoaFisicaServiceImplTest {
         assertEquals("98765432100", response.cpf());
         assertEquals("48999997777", response.telefone());
         assertEquals("novo@email.com", response.email());
+        assertEquals("novo@email.com", existente.getUsuario().getUsername());
+        assertEquals("nova-senha-hash", existente.getUsuario().getPassword());
     }
 
     @Test
@@ -151,6 +156,7 @@ class PessoaFisicaServiceImplTest {
         pessoa.setCpf(cpf);
         pessoa.setEmail(email);
         pessoa.setTelefone("48999999999");
+        pessoa.setUsuario(Usuario.builder().id(id).username(email).password("hash").role("ROLE_USER").build());
         return pessoa;
     }
 }

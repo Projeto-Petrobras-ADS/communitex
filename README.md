@@ -74,6 +74,19 @@ Executar com H2 (padrão):
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
+Ao iniciar com o profile `dev`, a aplicação cria dados fictícios para facilitar testes locais. O seed é
+idempotente, roda somente no H2 de desenvolvimento e preserva dados existentes entre reinícios.
+
+Todos os usuários fictícios usam a senha `password`:
+
+| Perfil | Usuário |
+|--------|---------|
+| Administrador | `admin` |
+| Cidadão | `ana.souza@exemplo.com` |
+| Cidadão | `bruno.lima@exemplo.com` |
+| Empresa | `contato@verdevida.com.br` |
+| Empresa | `contato@urbanasolucoes.com.br` |
+
 Executar com PostgreSQL via Docker:
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local-postgres
@@ -148,7 +161,7 @@ A API utiliza autenticação stateless com JWT (JSON Web Token).
 | `GET`    | `/api/pracas`             | Lista praças com filtros opcionais (id, nome, cidade)        | ❌   |
 | `GET`    | `/api/pracas/{id}`        | Busca praça por ID                                           | ❌   |
 | `GET`    | `/api/pracas/{id}/detalhes` | Busca praça com dados do cadastrante e histórico de adoções| ❌   |
-| `POST`   | `/api/pracas`             | Cria nova praça. Cadastrante obtido pelo JWT.                | ✅   |
+| `POST`   | `/api/pracas`             | Cria nova praça por ponto ou polígono GeoJSON. Cadastrante obtido pelo JWT. | ✅   |
 | `PUT`    | `/api/pracas/{id}`        | Atualiza praça existente                                     | ✅   |
 | `DELETE` | `/api/pracas/{id}`        | Remove praça                                                 | ✅   |
 
@@ -240,6 +253,7 @@ O esquema do banco é gerenciado automaticamente pelo Flyway. As migrações fic
 | V13      | Remove pessoa física de adoções                |
 | V14      | Vincula pessoa física cadastrante à praça      |
 | V15      | Criação da tabela `issues` e `issue_interactions`|
+| V20      | Adiciona polígono GeoJSON às praças             |
 
 ## Arquitetura
 

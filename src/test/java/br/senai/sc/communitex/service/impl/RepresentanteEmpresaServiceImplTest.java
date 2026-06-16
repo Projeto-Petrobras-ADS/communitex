@@ -45,7 +45,7 @@ class RepresentanteEmpresaServiceImplTest {
                 1L
         );
 
-        when(empresaService.findEntityById(1L)).thenReturn(empresa);
+        when(empresaService.buscarEntidadePorId(1L)).thenReturn(empresa);
         when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenAnswer(invocation -> {
             RepresentanteEmpresa rep = invocation.getArgument(0);
             rep.setId(10L);
@@ -69,7 +69,7 @@ class RepresentanteEmpresaServiceImplTest {
                 99L
         );
 
-        when(empresaService.findEntityById(99L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada com ID: 99"));
+        when(empresaService.buscarEntidadePorId(99L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada com ID: 99"));
 
         assertThrows(ResourceNotFoundException.class, () -> representanteService.create(dto));
         verify(representanteRepository, never()).save(any());
@@ -146,7 +146,7 @@ class RepresentanteEmpresaServiceImplTest {
         );
 
         when(representanteRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(empresaService.findEntityById(1L)).thenReturn(empresa);
+        when(empresaService.buscarEntidadePorId(1L)).thenReturn(empresa);
         when(representanteRepository.save(any(RepresentanteEmpresa.class))).thenReturn(existing);
 
         RepresentanteEmpresaResponseDTO response = representanteService.update(1L, dto);
@@ -183,7 +183,7 @@ class RepresentanteEmpresaServiceImplTest {
         );
 
         when(representanteRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(empresaService.findEntityById(2L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada com ID: 2"));
+        when(empresaService.buscarEntidadePorId(2L)).thenThrow(new ResourceNotFoundException("Empresa não encontrada com ID: 2"));
 
         assertThrows(ResourceNotFoundException.class, () -> representanteService.update(1L, dto));
     }

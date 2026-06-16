@@ -12,6 +12,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -65,13 +66,12 @@ public class RabbitMQNotificationServiceImpl implements NotificationService {
         );
 
         // data: structured info the consumer can use to render a rich template
-        var data = Map.of(
-                "recipientName",  responsavel.getNome(),
-                "pracaNome",      praca.getNome(),
-                "empresaNome",    solicitante.getRazaoSocial(),
-                "empresaEmail",   solicitante.getEmail(),
-                "proposta",       proposta
-        );
+        var data = new HashMap<String, String>();
+        putIfNotNull(data, "recipientName", responsavel.getNome());
+        putIfNotNull(data, "pracaNome", praca.getNome());
+        putIfNotNull(data, "empresaNome", solicitante.getRazaoSocial());
+        putIfNotNull(data, "empresaEmail", solicitante.getEmail());
+        putIfNotNull(data, "proposta", proposta);
 
         // metadata: routing / deep-link ids
         var metadata = Map.of(
@@ -97,6 +97,12 @@ public class RabbitMQNotificationServiceImpl implements NotificationService {
         } catch (Exception e) {
             log.error("Erro ao publicar notificação no RabbitMQ — destinatário ID: {}",
                     responsavel.getId(), e);
+        }
+    }
+
+    private void putIfNotNull(Map<String, String> values, String key, String value) {
+        if (value != null) {
+            values.put(key, value);
         }
     }
 }
