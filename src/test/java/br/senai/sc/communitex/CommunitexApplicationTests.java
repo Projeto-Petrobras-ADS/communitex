@@ -88,7 +88,7 @@ class CommunitexApplicationTests {
 	void givenDevDataSeeder_thenItIsRestrictedToDevProfile() {
 		Profile profile = DevDataSeeder.class.getAnnotation(Profile.class);
 
-		assertArrayEquals(new String[]{"dev"}, profile.value());
+		assertArrayEquals(new String[]{"dev", "local-postgres"}, profile.value());
 	}
 
 	@Test
