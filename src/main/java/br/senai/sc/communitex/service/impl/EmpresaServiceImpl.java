@@ -12,6 +12,7 @@ import br.senai.sc.communitex.model.RepresentanteEmpresa;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.service.EmpresaService;
+import br.senai.sc.communitex.service.RegistrationService;
 import br.senai.sc.communitex.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -58,18 +60,22 @@ public class EmpresaServiceImpl implements EmpresaService {
     @Transactional
     public EmpresaResponseDTO criar(EmpresaRequestDTO dto) {
         var cnpj = sanitizarNumeros(dto.cnpj());
+        var emailRepresentante = normalizarEmail(dto.emailRepresentante());
+        if (!RegistrationService.isValidCnpj(cnpj)) {
+            throw new BusinessException("CNPJ inválido");
+        }
         empresaRepository.buscarPorCnpj(cnpj)
                 .ifPresent(existing -> {
                     throw new BusinessException("Já existe uma empresa cadastrada com o CNPJ: " + dto.cnpj());
                 });
 
-        usuarioService.findByUsername(dto.emailRepresentante())
+        usuarioService.findByUsername(emailRepresentante)
                 .ifPresent(existing -> {
-                    throw new BusinessException("Já existe um usuário cadastrado com o email: " + dto.emailRepresentante());
+                    throw new BusinessException("Já existe um usuário cadastrado com o email: " + emailRepresentante);
                 });
 
         var usuarioRepresentante = Usuario.builder()
-                .username(dto.emailRepresentante())
+                .username(emailRepresentante)
                 .password(passwordEncoder.encode(dto.senhaRepresentante()))
                 .role("ROLE_EMPRESA")
                 .nome(dto.nomeRepresentante())
@@ -104,6 +110,10 @@ public class EmpresaServiceImpl implements EmpresaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com ID: " + id));
 
         var cnpj = sanitizarNumeros(dto.cnpj());
+        var emailRepresentante = normalizarEmail(dto.emailRepresentante());
+        if (!RegistrationService.isValidCnpj(cnpj)) {
+            throw new BusinessException("CNPJ inválido");
+        }
         if (!Objects.equals(empresa.getCnpj(), cnpj)) {
             empresaRepository.buscarPorCnpj(cnpj)
                     .filter(existing -> !Objects.equals(existing.getId(), id))
@@ -116,11 +126,11 @@ public class EmpresaServiceImpl implements EmpresaService {
         if (usuario == null) {
             throw new BusinessException("Empresa nao possui usuario representante associado");
         }
-        if (!Objects.equals(usuario.getUsername(), dto.emailRepresentante())) {
-            usuarioService.findByUsername(dto.emailRepresentante())
+        if (!Objects.equals(usuario.getUsername(), emailRepresentante)) {
+            usuarioService.findByUsername(emailRepresentante)
                     .filter(existing -> !Objects.equals(existing.getId(), usuario.getId()))
                     .ifPresent(existing -> {
-                        throw new BusinessException("Ja existe um usuario cadastrado com o email: " + dto.emailRepresentante());
+                        throw new BusinessException("Ja existe um usuario cadastrado com o email: " + emailRepresentante);
                     });
         }
 
@@ -138,7 +148,7 @@ public class EmpresaServiceImpl implements EmpresaService {
         empresa.setEstado(normalizarEstado(dto.estado()));
 
         usuario.setNome(dto.nomeRepresentante());
-        usuario.setUsername(dto.emailRepresentante());
+        usuario.setUsername(emailRepresentante);
         usuario.setPassword(passwordEncoder.encode(dto.senhaRepresentante()));
         usuarioService.save(usuario);
 
@@ -214,5 +224,9 @@ public class EmpresaServiceImpl implements EmpresaService {
 
     private String normalizarEstado(String estado) {
         return estado == null || estado.isBlank() ? null : estado.toUpperCase();
+    }
+
+    private String normalizarEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

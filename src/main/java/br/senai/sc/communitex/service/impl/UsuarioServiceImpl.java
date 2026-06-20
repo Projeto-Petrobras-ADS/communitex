@@ -23,7 +23,7 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Usuario> findByUsername(String username) {
-        return usuarioRepository.findByUsername(username);
+        return usuarioRepository.findByUsernameIgnoreCase(username);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class UsuarioServiceImpl implements UsuarioService, UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return usuarioRepository.findByUsername(username)
+        return usuarioRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
     }
 }

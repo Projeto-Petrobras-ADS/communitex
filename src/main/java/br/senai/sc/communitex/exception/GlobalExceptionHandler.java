@@ -17,6 +17,14 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(RegistrationValidationException.class)
+    public ResponseEntity<ProblemDetail> handleRegistrationValidationException(RegistrationValidationException ex) {
+        log.warn("Erro de validacao no cadastro: {}", ex.getErrors());
+        var error = problem(HttpStatus.BAD_REQUEST, "Erro de validação", ex.getMessage());
+        error.setProperty("errors", ex.getErrors());
+        return ResponseEntity.badRequest().body(error);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleResourceNotFoundException(ResourceNotFoundException ex) {
         log.warn("Recurso não encontrado: {}", ex.getMessage());

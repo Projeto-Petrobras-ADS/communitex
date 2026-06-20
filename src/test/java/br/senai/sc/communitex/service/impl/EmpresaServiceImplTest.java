@@ -48,7 +48,7 @@ class EmpresaServiceImplTest {
         empresa = new Empresa();
         empresa.setId(1L);
         empresa.setRazaoSocial("Tech Soluções LTDA");
-        empresa.setCnpj("12345678000199");
+        empresa.setCnpj("11222333000181");
         empresa.setNomeFantasia("Tech Soluções");
         empresa.setEmail("contato@tech.com");
         empresa.setTelefone("48999999999");
@@ -62,7 +62,7 @@ class EmpresaServiceImplTest {
 
         requestDTO = new EmpresaRequestDTO(
                 "Tech Soluções LTDA",
-                "12.345.678/0001-99",
+                "11.222.333/0001-81",
                 "Tech Soluções",
                 "contato@tech.com",
                 "(48) 99999-9999",
@@ -120,7 +120,7 @@ class EmpresaServiceImplTest {
         EmpresaResponseDTO response = empresaService.criar(requestDTO);
 
         assertEquals("Tech Soluções", response.nomeFantasia());
-        assertEquals("12345678000199", response.cnpj());
+        assertEquals("11222333000181", response.cnpj());
         verify(empresaRepository, times(1)).save(any(Empresa.class));
         verify(usuarioService, times(1)).save(any(Usuario.class));
     }
@@ -198,4 +198,3 @@ class EmpresaServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> empresaService.buscarEntidadePorId(99L));
     }
 }
-

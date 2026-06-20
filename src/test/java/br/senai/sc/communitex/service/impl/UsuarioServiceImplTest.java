@@ -28,7 +28,7 @@ class UsuarioServiceImplTest {
     @Test
     void givenUsernameExistente_whenFindByUsername_thenRetornaOptionalComUsuario() {
         var usuario = usuario(1L, "user@test.com", "ROLE_USER");
-        when(usuarioRepository.findByUsername("user@test.com")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByUsernameIgnoreCase("user@test.com")).thenReturn(Optional.of(usuario));
 
         var resultado = usuarioService.findByUsername("user@test.com");
 
@@ -50,7 +50,7 @@ class UsuarioServiceImplTest {
     @Test
     void givenUsernameExistente_whenLoadUserByUsername_thenRetornaUserDetails() {
         var usuario = usuario(1L, "auth@test.com", "ROLE_USER");
-        when(usuarioRepository.findByUsername("auth@test.com")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByUsernameIgnoreCase("auth@test.com")).thenReturn(Optional.of(usuario));
 
         var userDetails = usuarioService.loadUserByUsername("auth@test.com");
 
@@ -59,7 +59,7 @@ class UsuarioServiceImplTest {
 
     @Test
     void givenUsernameInexistente_whenLoadUserByUsername_thenLancaUsernameNotFoundException() {
-        when(usuarioRepository.findByUsername("inexistente@test.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.findByUsernameIgnoreCase("inexistente@test.com")).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class,
                 () -> usuarioService.loadUserByUsername("inexistente@test.com"));
@@ -74,4 +74,3 @@ class UsuarioServiceImplTest {
         return usuario;
     }
 }
-

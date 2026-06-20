@@ -9,7 +9,9 @@ public record PessoaFisicaRequestDTO(
         @NotBlank(message = "O CPF é obrigatório") @Pattern(regexp = "\\d{11}", message = "CPF inválido! Deve conter 11 dígitos") String cpf,
         @NotBlank(message = "O email é obrigatório") @Email(message = "Email inválido") String email,
         @Pattern(regexp = "\\d{10,11}", message = "Telefone inválido") String telefone,
-        @NotBlank(message = "A senha é obrigatória") String senha,
+        @NotBlank(message = "A senha é obrigatória")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+                message = "A senha deve ter 8 caracteres, incluindo maiúscula, minúscula, número e símbolo") String senha,
         @Pattern(regexp = "\\d{8}", message = "CEP inválido! Deve conter 8 dígitos") String cep,
         String logradouro,
         String numero,

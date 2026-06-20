@@ -52,7 +52,7 @@ class PessoaFisicaControllerTest {
 
     @Test
     void givenValidPayload_whenCreate_thenReturnsCreated() throws Exception {
-        var request = new PessoaFisicaRequestDTO("Murilo", "12345678901", "murilo@email.com", "48999990000", "senha123");
+        var request = new PessoaFisicaRequestDTO("Murilo", "52998224725", "murilo@email.com", "48999990000", "Senha@123");
         var response = new PessoaFisicaResponseDTO(1L, "Murilo", "12345678901", "murilo@email.com", "48999990000");
 
         when(pessoaFisicaService.create(any(PessoaFisicaRequestDTO.class))).thenReturn(response);
@@ -92,6 +92,5 @@ class PessoaFisicaControllerTest {
                 .andExpect(jsonPath("$.status").value(404));
     }
 }
-
 
 

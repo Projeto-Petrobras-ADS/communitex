@@ -50,13 +50,13 @@ class PessoaFisicaServiceImplTest {
     void givenDadosValidos_whenCreate_thenCriaPessoaFisica() {
         var dto = new PessoaFisicaRequestDTO(
                 "Murilo",
-                "123.456.789-01",
+                "529.982.247-25",
                 "murilo@email.com",
                 "(48) 99999-9999",
                 "senha123"
         );
 
-        when(pessoaFisicaRepository.findByCpf("12345678901")).thenReturn(Optional.empty());
+        when(pessoaFisicaRepository.findByCpf("52998224725")).thenReturn(Optional.empty());
         when(pessoaFisicaRepository.findByEmail("murilo@email.com")).thenReturn(Optional.empty());
         when(usuarioService.findByUsername("murilo@email.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("senha123")).thenReturn("senha-hash");
@@ -74,15 +74,15 @@ class PessoaFisicaServiceImplTest {
         var response = pessoaFisicaService.create(dto);
 
         assertEquals(99L, response.id());
-        assertEquals("12345678901", response.cpf());
+        assertEquals("52998224725", response.cpf());
         assertEquals("48999999999", response.telefone());
         assertEquals("murilo@email.com", response.email());
     }
 
     @Test
     void givenCpfDuplicado_whenCreate_thenLancaBusinessException() {
-        var dto = new PessoaFisicaRequestDTO("Murilo", "12345678901", "murilo@email.com", "48999999999", "senha123");
-        when(pessoaFisicaRepository.findByCpf("12345678901")).thenReturn(Optional.of(pessoaFisica(1L, "12345678901", "outro@email.com")));
+        var dto = new PessoaFisicaRequestDTO("Murilo", "52998224725", "murilo@email.com", "48999999999", "senha123");
+        when(pessoaFisicaRepository.findByCpf("52998224725")).thenReturn(Optional.of(pessoaFisica(1L, "52998224725", "outro@email.com")));
 
         assertThrows(BusinessException.class, () -> pessoaFisicaService.create(dto));
 
@@ -91,9 +91,9 @@ class PessoaFisicaServiceImplTest {
 
     @Test
     void givenEmailDeUsuarioExistente_whenCreate_thenLancaBusinessException() {
-        var dto = new PessoaFisicaRequestDTO("Murilo", "12345678901", "murilo@email.com", "48999999999", "senha123");
+        var dto = new PessoaFisicaRequestDTO("Murilo", "52998224725", "murilo@email.com", "48999999999", "senha123");
 
-        when(pessoaFisicaRepository.findByCpf("12345678901")).thenReturn(Optional.empty());
+        when(pessoaFisicaRepository.findByCpf("52998224725")).thenReturn(Optional.empty());
         when(pessoaFisicaRepository.findByEmail("murilo@email.com")).thenReturn(Optional.empty());
         when(usuarioService.findByUsername("murilo@email.com")).thenReturn(Optional.of(new Usuario()));
 
@@ -104,20 +104,20 @@ class PessoaFisicaServiceImplTest {
 
     @Test
     void givenPessoaFisicaExistente_whenUpdate_thenAtualizaPessoaFisica() {
-        var existente = pessoaFisica(1L, "12345678901", "antigo@email.com");
+        var existente = pessoaFisica(1L, "52998224725", "antigo@email.com");
         existente.setNome("Nome Antigo");
         existente.setTelefone("48999998888");
 
         var dto = new PessoaFisicaRequestDTO(
                 "Nome Novo",
-                "987.654.321-00",
+                "111.444.777-35",
                 "novo@email.com",
                 "(48) 99999-7777",
                 "senha-nao-usada"
         );
 
         when(pessoaFisicaRepository.findById(1L)).thenReturn(Optional.of(existente));
-        when(pessoaFisicaRepository.findByCpf("98765432100")).thenReturn(Optional.empty());
+        when(pessoaFisicaRepository.findByCpf("11144477735")).thenReturn(Optional.empty());
         when(pessoaFisicaRepository.findByEmail("novo@email.com")).thenReturn(Optional.empty());
         when(usuarioService.findByUsername("novo@email.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("senha-nao-usada")).thenReturn("nova-senha-hash");
@@ -127,7 +127,7 @@ class PessoaFisicaServiceImplTest {
         var response = pessoaFisicaService.update(1L, dto);
 
         assertEquals("Nome Novo", response.nome());
-        assertEquals("98765432100", response.cpf());
+        assertEquals("11144477735", response.cpf());
         assertEquals("48999997777", response.telefone());
         assertEquals("novo@email.com", response.email());
         assertEquals("novo@email.com", existente.getUsuario().getUsername());
@@ -160,4 +160,3 @@ class PessoaFisicaServiceImplTest {
         return pessoa;
     }
 }
-

@@ -4,10 +4,12 @@ package br.senai.sc.communitex.controller;
 import br.senai.sc.communitex.dto.AuthRequest;
 import br.senai.sc.communitex.dto.AuthResponse;
 import br.senai.sc.communitex.dto.RefreshRequest;
-import br.senai.sc.communitex.dto.RegisterRequest;
+import br.senai.sc.communitex.dto.RegistrationResponse;
+import br.senai.sc.communitex.dto.UnifiedRegisterRequest;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.service.JwtService;
+import br.senai.sc.communitex.service.RegistrationService;
 import br.senai.sc.communitex.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,7 +21,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,19 +34,19 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
     private final UsuarioService usuarioService;
+    private final RegistrationService registrationService;
 
     public AuthController(AuthenticationManager authenticationManager,
                           UserDetailsService userDetailsService,
                           JwtService jwtService,
                           UsuarioService usuarioService,
-                          PasswordEncoder passwordEncoder) {
+                          RegistrationService registrationService) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtService = jwtService;
         this.usuarioService = usuarioService;
-        this.passwordEncoder = passwordEncoder;
+        this.registrationService = registrationService;
     }
 
     @Operation(summary = "Autenticar usuário")
@@ -71,21 +72,11 @@ public class AuthController {
     }
 
     @Operation(summary = "Registrar novo usuário")
-    @ApiResponse(responseCode = "200", description = "Usuário registrado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Nome de usuário já existe ou dados inválidos")
+    @ApiResponse(responseCode = "201", description = "Usuário registrado e autenticado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos ou já utilizados")
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
-        if (usuarioService.findByUsername(registerRequest.username()).isPresent()) {
-            return ResponseEntity.badRequest().body("Erro: Nome de usuário já está em uso!");
-        }
-        Usuario novoUsuario = new Usuario();
-        novoUsuario.setUsername(registerRequest.username());
-
-        novoUsuario.setPassword(passwordEncoder.encode(registerRequest.password()));
-        novoUsuario.setRole("ROLE_USER");
-        usuarioService.save(novoUsuario);
-
-        return ResponseEntity.ok("Usuário registrado com sucesso!");
+    public ResponseEntity<RegistrationResponse> registerUser(@RequestBody UnifiedRegisterRequest registerRequest) {
+        return ResponseEntity.status(201).body(registrationService.register(registerRequest));
     }
 
     @Operation(summary = "Renovar token de acesso")

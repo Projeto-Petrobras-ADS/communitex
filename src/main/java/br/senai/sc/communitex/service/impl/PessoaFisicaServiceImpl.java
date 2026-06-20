@@ -9,6 +9,7 @@ import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.PessoaFisicaRepository;
 import br.senai.sc.communitex.service.PessoaFisicaService;
+import br.senai.sc.communitex.service.RegistrationService;
 import br.senai.sc.communitex.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -56,16 +58,20 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
     @Transactional
     public PessoaFisicaResponseDTO create(PessoaFisicaRequestDTO dto) {
         var cpf = sanitizarNumeros(dto.cpf());
+        var email = normalizarEmail(dto.email());
+        if (!RegistrationService.isValidCpf(cpf)) {
+            throw new BusinessException("CPF inválido");
+        }
         validarDuplicidadeCpf(cpf, null);
-        validarDuplicidadeEmail(dto.email(), null);
+        validarDuplicidadeEmail(email, null);
 
-        usuarioService.findByUsername(dto.email())
+        usuarioService.findByUsername(email)
                 .ifPresent(existing -> {
-                    throw new BusinessException("Já existe um usuário cadastrado com o email: " + dto.email());
+                    throw new BusinessException("Já existe um usuário cadastrado com o email: " + email);
                 });
 
         var usuario = Usuario.builder()
-                .username(dto.email())
+                .username(email)
                 .password(passwordEncoder.encode(dto.senha()))
                 .role("ROLE_USER")
                 .nome(dto.nome())
@@ -75,7 +81,7 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
         var pessoaFisica = PessoaFisica.builder()
                 .nome(dto.nome())
                 .cpf(cpf)
-                .email(dto.email())
+                .email(email)
                 .telefone(sanitizarNumeros(dto.telefone()))
                 .cep(sanitizarNumeros(dto.cep()))
                 .logradouro(dto.logradouro())
@@ -99,23 +105,27 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pessoa Física não encontrada com ID: " + id));
 
         var cpf = sanitizarNumeros(dto.cpf());
+        var email = normalizarEmail(dto.email());
+        if (!RegistrationService.isValidCpf(cpf)) {
+            throw new BusinessException("CPF inválido");
+        }
         if (!Objects.equals(pessoaFisica.getCpf(), cpf)) {
             validarDuplicidadeCpf(cpf, id);
         }
 
-        if (!Objects.equals(pessoaFisica.getEmail(), dto.email())) {
-            validarDuplicidadeEmail(dto.email(), id);
-            usuarioService.findByUsername(dto.email())
+        if (!Objects.equals(pessoaFisica.getEmail(), email)) {
+            validarDuplicidadeEmail(email, id);
+            usuarioService.findByUsername(email)
                     .filter(existing -> pessoaFisica.getUsuario() == null
                             || !Objects.equals(existing.getId(), pessoaFisica.getUsuario().getId()))
                     .ifPresent(existing -> {
-                        throw new BusinessException("Ja existe um usuario cadastrado com o email: " + dto.email());
+                        throw new BusinessException("Ja existe um usuario cadastrado com o email: " + email);
                     });
         }
 
         pessoaFisica.setNome(dto.nome());
         pessoaFisica.setCpf(cpf);
-        pessoaFisica.setEmail(dto.email());
+        pessoaFisica.setEmail(email);
         pessoaFisica.setTelefone(sanitizarNumeros(dto.telefone()));
         pessoaFisica.setCep(sanitizarNumeros(dto.cep()));
         pessoaFisica.setLogradouro(dto.logradouro());
@@ -130,7 +140,7 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
             throw new BusinessException("Pessoa fisica nao possui usuario associado");
         }
         usuario.setNome(dto.nome());
-        usuario.setUsername(dto.email());
+        usuario.setUsername(email);
         usuario.setPassword(passwordEncoder.encode(dto.senha()));
         usuarioService.save(usuario);
 
@@ -171,6 +181,10 @@ public class PessoaFisicaServiceImpl implements PessoaFisicaService {
 
     private String normalizarEstado(String estado) {
         return estado != null && !estado.isBlank() ? estado.toUpperCase() : null;
+    }
+
+    private String normalizarEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private PessoaFisicaResponseDTO toResponseDTO(PessoaFisica pessoaFisica) {

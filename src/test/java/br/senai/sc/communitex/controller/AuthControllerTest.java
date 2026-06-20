@@ -2,9 +2,13 @@ package br.senai.sc.communitex.controller;
 
 import br.senai.sc.communitex.dto.AuthRequest;
 import br.senai.sc.communitex.dto.RefreshRequest;
-import br.senai.sc.communitex.dto.RegisterRequest;
+import br.senai.sc.communitex.dto.RegistrationResponse;
+import br.senai.sc.communitex.dto.TipoConta;
+import br.senai.sc.communitex.dto.UnifiedRegisterRequest;
+import br.senai.sc.communitex.exception.RegistrationValidationException;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.service.JwtService;
+import br.senai.sc.communitex.service.RegistrationService;
 import br.senai.sc.communitex.service.UsuarioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -16,7 +20,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,7 +29,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,7 +52,7 @@ class AuthControllerTest {
     private JwtService jwtService;
 
     @MockitoBean
-    private PasswordEncoder passwordEncoder;
+    private RegistrationService registrationService;
 
     @MockitoBean
     private UsuarioService usuarioService;
@@ -96,30 +98,34 @@ class AuthControllerTest {
     }
 
     @Test
-    void givenExistingUsername_whenRegister_thenReturnsBadRequest() throws Exception {
-                var request = new RegisterRequest("murilo@communitex.com", "senha123", null);
-
-        when(usuarioService.findByUsername("murilo@communitex.com")).thenReturn(Optional.of(new Usuario()));
+    void givenInvalidRegistration_whenRegister_thenReturnsFieldErrors() throws Exception {
+        var request = new UnifiedRegisterRequest(TipoConta.PESSOA_FISICA, "Murilo", "11111111111",
+                null, null, null, "murilo@communitex.com", "Senha@123", "Senha@123", true);
+        when(registrationService.register(any())).thenThrow(
+                new RegistrationValidationException(java.util.Map.of("cpf", "Informe um CPF válido")));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Erro: Nome de usuário já está em uso!"));
+                .andExpect(jsonPath("$.errors.cpf").value("Informe um CPF válido"));
     }
 
     @Test
-    void givenNewUsername_whenRegister_thenReturnsOk() throws Exception {
-                var request = new RegisterRequest("novo@communitex.com", "senha123", "ADMIN");
-
-        when(usuarioService.findByUsername("novo@communitex.com")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("senha123")).thenReturn("senha-hash");
+    void givenValidRegistration_whenRegister_thenReturnsCreatedSession() throws Exception {
+        var request = new UnifiedRegisterRequest(TipoConta.PESSOA_FISICA, "Murilo", "52998224725",
+                null, null, null, "novo@communitex.com", "Senha@123", "Senha@123", true);
+        var response = new RegistrationResponse("access", "refresh", TipoConta.PESSOA_FISICA,
+                1L, "Murilo", "novo@communitex.com");
+        when(registrationService.register(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Usuário registrado com sucesso!"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accessToken").value("access"))
+                .andExpect(jsonPath("$.tipoConta").value("PESSOA_FISICA"))
+                .andExpect(jsonPath("$.perfilId").value(1));
     }
 
     @Test
@@ -166,5 +172,4 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.status").value(401));
     }
 }
-
 

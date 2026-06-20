@@ -84,14 +84,14 @@ class EmpresaControllerTest {
     void givenValidPayload_whenCreate_thenReturnsCreated() throws Exception {
         var request = new EmpresaRequestDTO(
                 "Tech LTDA",
-                "12.345.678/0001-99",
+                "11.222.333/0001-81",
                 "Tech",
                 "contato@tech.com",
                 "(48)99999-0000",
                 null,
                 "Joao",
                 "joao@tech.com",
-                "senha123"
+                "Senha@123"
         );
 
         var response = new EmpresaResponseDTO(1L, "Tech LTDA", "12345678000199", "Tech", "contato@tech.com", "48999990000", null, List.of());
@@ -105,6 +105,5 @@ class EmpresaControllerTest {
                 .andExpect(jsonPath("$.id").value(1L));
     }
 }
-
 
 
