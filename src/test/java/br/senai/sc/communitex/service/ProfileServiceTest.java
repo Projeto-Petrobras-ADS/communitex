@@ -5,20 +5,22 @@ import br.senai.sc.communitex.exception.RegistrationValidationException;
 import br.senai.sc.communitex.model.Usuario;
 import br.senai.sc.communitex.repository.EmpresaRepository;
 import br.senai.sc.communitex.repository.PessoaFisicaRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +39,13 @@ class ProfileServiceTest {
     void setUp() {
         service = new ProfileService(pessoaFisicaRepository, empresaRepository, usuarioService,
                 passwordEncoder, jwtService);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("maria@email.com", null, List.of()));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -48,16 +57,12 @@ class ProfileServiceTest {
         when(jwtService.generateToken(usuario)).thenReturn("access");
         when(jwtService.generateRefreshToken(usuario)).thenReturn("refresh");
 
-        try (MockedStatic<br.senai.sc.communitex.security.AuthenticatedUser> auth =
-                     mockStatic(br.senai.sc.communitex.security.AuthenticatedUser.class)) {
-            auth.when(br.senai.sc.communitex.security.AuthenticatedUser::username).thenReturn("maria@email.com");
-            var response = service.changePassword(new PasswordChangeRequest("Antiga@123", "Nova@1234", "Nova@1234"));
+        var response = service.changePassword(new PasswordChangeRequest("Antiga@123", "Nova@1234", "Nova@1234"));
 
-            assertEquals("access", response.accessToken);
-            assertEquals("refresh", response.refreshToken);
-            assertEquals("hash-novo", usuario.getPassword());
-            verify(usuarioService).save(usuario);
-        }
+        assertEquals("access", response.accessToken);
+        assertEquals("refresh", response.refreshToken);
+        assertEquals("hash-novo", usuario.getPassword());
+        verify(usuarioService).save(usuario);
     }
 
     @Test
@@ -66,15 +71,11 @@ class ProfileServiceTest {
         when(usuarioService.findByUsername("maria@email.com")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
-        try (MockedStatic<br.senai.sc.communitex.security.AuthenticatedUser> auth =
-                     mockStatic(br.senai.sc.communitex.security.AuthenticatedUser.class)) {
-            auth.when(br.senai.sc.communitex.security.AuthenticatedUser::username).thenReturn("maria@email.com");
-            var error = assertThrows(RegistrationValidationException.class,
-                    () -> service.changePassword(new PasswordChangeRequest("errada", "fraca", "diferente")));
+        var error = assertThrows(RegistrationValidationException.class,
+                () -> service.changePassword(new PasswordChangeRequest("errada", "fraca", "diferente")));
 
-            assertEquals("A senha atual está incorreta", error.getErrors().get("senhaAtual"));
-            assertEquals(true, error.getErrors().containsKey("novaSenha"));
-            assertEquals(true, error.getErrors().containsKey("confirmacaoSenha"));
-        }
+        assertEquals("A senha atual está incorreta", error.getErrors().get("senhaAtual"));
+        assertEquals(true, error.getErrors().containsKey("novaSenha"));
+        assertEquals(true, error.getErrors().containsKey("confirmacaoSenha"));
     }
 }

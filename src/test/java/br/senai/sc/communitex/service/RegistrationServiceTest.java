@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,7 +62,7 @@ class RegistrationServiceTest {
         assertEquals("access", result.accessToken());
         assertEquals("cidadao@email.com", result.email());
         assertEquals(10L, result.perfilId());
-        verify(usuarioService).save(any(Usuario.class));
+        verify(usuarioService, times(2)).save(any(Usuario.class));
         verify(pessoaFisicaRepository).save(any(PessoaFisica.class));
     }
 
@@ -101,7 +102,6 @@ class RegistrationServiceTest {
     void rejectsDuplicateDocumentAndEmailWithFieldErrors() {
         var request = pessoaRequest("pessoa@email.com", "52998224725");
         when(usuarioService.findByUsername("pessoa@email.com")).thenReturn(Optional.of(new Usuario()));
-        when(pessoaFisicaRepository.findByEmail("pessoa@email.com")).thenReturn(Optional.empty());
         when(pessoaFisicaRepository.findByCpf("52998224725")).thenReturn(Optional.of(new PessoaFisica()));
 
         var exception = assertThrows(RegistrationValidationException.class, () -> service.register(request));
