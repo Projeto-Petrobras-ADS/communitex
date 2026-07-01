@@ -288,7 +288,7 @@ class IssueServiceImplTest {
         var perto = issue(1L, "Perto", -27.5969, -48.5495, autor, IssueStatus.ABERTA);
         var longe = issue(2L, "Longe", -27.7000, -48.7000, autor, IssueStatus.ABERTA);
 
-        when(issueRepository.findByLatitudeBetweenAndLongitudeBetween(
+        when(issueRepository.findByAtivaTrueAndLatitudeBetweenAndLongitudeBetween(
                 anyDouble(), anyDouble(), anyDouble(), anyDouble()
         )).thenReturn(List.of(perto, longe));
 
@@ -324,9 +324,9 @@ class IssueServiceImplTest {
                 .tipo(IssueType.BURACO)
                 .arquivo(null)
                 .autor(autor)
+                .ativa(true)
                 .interacoes(List.of())
                 .dataCriacao(LocalDateTime.now())
                 .build();
     }
 }
-

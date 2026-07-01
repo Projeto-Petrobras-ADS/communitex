@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -75,27 +76,31 @@ public class DenunciaServiceImpl implements DenunciaService {
     @Override
     @Transactional(readOnly = true)
     public DenunciaResponseDTO buscarPorId(Long id) {
-        return toResponseDTO(buscarDenunciaPorId(id));
+        return toResponseDTO(buscarDenunciaVisivelPorId(id));
     }
 
     @Override
     @Transactional(readOnly = true)
     public DenunciaDetailResponseDTO buscarPorIdComDetalhes(Long id) {
-        return toDetailResponseDTO(buscarDenunciaPorId(id));
+        return toDetailResponseDTO(buscarDenunciaVisivelPorId(id));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<DenunciaResponseDTO> listarTodas() {
-        return issueRepository.findAll().stream()
+        return issueRepository.findByAtivaTrue().stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DenunciaResponseDTO> listarTodas(Pageable pageable) {
-        return issueRepository.findAll(pageable)
+    public Page<DenunciaResponseDTO> listarTodas(Pageable pageable, boolean incluirInativas) {
+        if (incluirInativas && !isAdmin()) {
+            throw new ForbiddenException("Apenas administradores podem visualizar denuncias inativas");
+        }
+        var denuncias = incluirInativas ? issueRepository.findAll(pageable) : issueRepository.findByAtivaTrue(pageable);
+        return denuncias
                 .map(this::toResponseDTO);
     }
 
@@ -108,7 +113,7 @@ public class DenunciaServiceImpl implements DenunciaService {
         var longitudeScale = Math.max(Math.cos(Math.toRadians(latitude)), 0.01);
         var longitudeDelta = radiusMeters / (111_320.0 * longitudeScale);
 
-        return issueRepository.findByLatitudeBetweenAndLongitudeBetween(
+        return issueRepository.findByAtivaTrueAndLatitudeBetweenAndLongitudeBetween(
                         latitude - latitudeDelta,
                         latitude + latitudeDelta,
                         longitude - longitudeDelta,
@@ -125,6 +130,7 @@ public class DenunciaServiceImpl implements DenunciaService {
     @Transactional
     public DenunciaResponseDTO atualizarStatus(Long id, IssueStatus status) {
         var issue = buscarDenunciaPorId(id);
+        requireAtiva(issue);
 
         if (status == IssueStatus.RESOLVIDA) {
             throw new BusinessException("A resolucao exige confirmacao da empresa responsavel e do autor da denuncia");
@@ -136,8 +142,27 @@ public class DenunciaServiceImpl implements DenunciaService {
 
     @Override
     @Transactional
+    public DenunciaResponseDTO inativar(Long id) {
+        var issue = buscarDenunciaPorId(id);
+        issue.setAtiva(false);
+        log.info("Denúncia ID: {} inativada", id);
+        return toResponseDTO(issueRepository.save(issue));
+    }
+
+    @Override
+    @Transactional
+    public DenunciaResponseDTO reativar(Long id) {
+        var issue = buscarDenunciaPorId(id);
+        issue.setAtiva(true);
+        log.info("Denúncia ID: {} reativada", id);
+        return toResponseDTO(issueRepository.save(issue));
+    }
+
+    @Override
+    @Transactional
     public DenunciaInteracaoResponseDTO adicionarInteracao(Long issueId, DenunciaInteracaoRequestDTO dto) {
-        var issue = buscarDenunciaPorId(issueId);
+        var issue = buscarDenunciaVisivelPorId(issueId);
+        requireAtiva(issue);
 
         var usuario = getAuthenticatedUser();
 
@@ -162,6 +187,7 @@ public class DenunciaServiceImpl implements DenunciaService {
         var interaction = buscarInteracaoPorId(interactionId);
 
         validarInteracaoPertenceDaDenuncia(issueId, interaction);
+        requireAtiva(interaction.getIssue());
 
         var usuario = getAuthenticatedUser();
         if (!interaction.getUsuario().getId().equals(usuario.getId())) {
@@ -175,7 +201,7 @@ public class DenunciaServiceImpl implements DenunciaService {
     @Override
     @Transactional(readOnly = true)
     public List<DenunciaInteracaoResponseDTO> listarInteracoesDaDenuncia(Long issueId) {
-        buscarDenunciaPorId(issueId);
+        buscarDenunciaVisivelPorId(issueId);
 
         return interactionRepository.findByIssueIdOrderByDataCriacaoDesc(issueId).stream()
                 .map(this::toInteractionResponseDTO)
@@ -233,6 +259,14 @@ public class DenunciaServiceImpl implements DenunciaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Denúncia não encontrada com ID: " + id));
     }
 
+    private Denuncia buscarDenunciaVisivelPorId(Long id) {
+        var issue = buscarDenunciaPorId(id);
+        if (!isAtiva(issue) && !isAdmin()) {
+            throw new ResourceNotFoundException("Denúncia não encontrada com ID: " + id);
+        }
+        return issue;
+    }
+
     private DenunciaInteracao buscarInteracaoPorId(Long interactionId) {
         return interactionRepository.findById(interactionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Interação não encontrada com ID: " + interactionId));
@@ -267,6 +301,22 @@ public class DenunciaServiceImpl implements DenunciaService {
                 .orElseThrow(() -> new ForbiddenException("Usuário não encontrado: " + username));
     }
 
+    private void requireAtiva(Denuncia issue) {
+        if (!isAtiva(issue)) {
+            throw new BusinessException("Denuncia inativa nao permite alteracoes");
+        }
+    }
+
+    private boolean isAtiva(Denuncia issue) {
+        return Boolean.TRUE.equals(issue.getAtiva());
+    }
+
+    private boolean isAdmin() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
     private DenunciaResponseDTO toResponseDTO(Denuncia issue) {
         var interacoes = obterInteracoesDaDenuncia(issue);
 
@@ -280,6 +330,7 @@ public class DenunciaServiceImpl implements DenunciaService {
                 issue.getStatus(),
                 issue.getTipo(),
                 issue.getDataCriacao(),
+                isAtiva(issue),
                 issue.getAutor().getId(),
                 obterNomeUsuario(issue.getAutor()),
                 interacoes.size(),
@@ -304,6 +355,7 @@ public class DenunciaServiceImpl implements DenunciaService {
                 issue.getStatus(),
                 issue.getTipo(),
                 issue.getDataCriacao(),
+                isAtiva(issue),
                 issue.getAutor().getId(),
                 obterNomeUsuario(issue.getAutor()),
                 contarInteracoesPorTipo(interacoesDaDenuncia, InteractionType.APOIO),
@@ -337,4 +389,3 @@ public class DenunciaServiceImpl implements DenunciaService {
         return usuario.getNome() != null ? usuario.getNome() : usuario.getUsername();
     }
 }
-

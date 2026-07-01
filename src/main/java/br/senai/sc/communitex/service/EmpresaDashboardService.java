@@ -47,7 +47,9 @@ public class EmpresaDashboardService {
     public EmpresaDashboardDTO obterDashboard() {
         var empresa = getEmpresaFromAuthenticatedUser();
         var propostas = adocaoRepository.findByEmpresaId(empresa.getId());
-        var reparos = atendimentoRepository.findByEmpresaIdOrderByDataAceiteDesc(empresa.getId());
+        var reparos = atendimentoRepository.findByEmpresaIdOrderByDataAceiteDesc(empresa.getId()).stream()
+                .filter(reparo -> reparo.getDenuncia() != null && Boolean.TRUE.equals(reparo.getDenuncia().getAtiva()))
+                .toList();
 
         var propostasEmAnalise = countPropostas(propostas, STATUS_EM_ANALISE);
         var propostasAprovadas = countPropostas(propostas, STATUS_ADOTADA);

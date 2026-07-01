@@ -7,6 +7,7 @@ import br.senai.sc.communitex.dto.PracaPesquisaDTO;
 import br.senai.sc.communitex.dto.PracaRequestDTO;
 import br.senai.sc.communitex.dto.PracaResponseDTO;
 import br.senai.sc.communitex.enums.StatusPraca;
+import br.senai.sc.communitex.exception.ForbiddenException;
 import br.senai.sc.communitex.exception.ResourceNotFoundException;
 import br.senai.sc.communitex.model.PessoaFisica;
 import br.senai.sc.communitex.model.Praca;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -93,7 +95,8 @@ public class PracaServiceImpl implements PracaService {
                 .build();
 
         var saved = pracaRepository.save(praca);
-        log.info("Praça criada com ID: {} pelo usuário: {}", saved.getId(), pessoaFisica.getNome());
+        log.info("Praça criada com ID: {} pelo usuário: {}", saved.getId(),
+                pessoaFisica != null ? pessoaFisica.getNome() : AuthenticatedUser.username());
         return toResponseDTO(saved);
     }
 
@@ -127,7 +130,20 @@ public class PracaServiceImpl implements PracaService {
 
 
     private PessoaFisica getPessoaFisicaFromAuthenticatedUser() {
-        return pessoaFisicaService.findByUsuarioUsername(AuthenticatedUser.username());
+        try {
+            return pessoaFisicaService.findByUsuarioUsername(AuthenticatedUser.username());
+        } catch (ForbiddenException ex) {
+            if (isAdmin()) {
+                return null;
+            }
+            throw ex;
+        }
+    }
+
+    private boolean isAdmin() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private PracaResponseDTO toResponseDTO(Praca praca) {

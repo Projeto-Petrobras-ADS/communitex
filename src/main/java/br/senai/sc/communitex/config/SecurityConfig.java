@@ -79,6 +79,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/empresas").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/pessoas-fisicas").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/issues").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/issues/proximidade").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/issues/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/issues/*/detalhes").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/issues/*/interacoes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/arquivos/*/conteudo").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/dashboard/publico").permitAll()
                         .requestMatchers(

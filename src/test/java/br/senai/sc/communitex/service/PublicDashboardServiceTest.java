@@ -5,6 +5,7 @@ import br.senai.sc.communitex.enums.StatusAdocao;
 import br.senai.sc.communitex.enums.StatusPraca;
 import br.senai.sc.communitex.model.Adocao;
 import br.senai.sc.communitex.model.AtendimentoDenuncia;
+import br.senai.sc.communitex.model.Denuncia;
 import br.senai.sc.communitex.model.Praca;
 import br.senai.sc.communitex.repository.AdocaoRepository;
 import br.senai.sc.communitex.repository.AtendimentoDenunciaRepository;
@@ -43,11 +44,12 @@ class PublicDashboardServiceTest {
         var adoptedSquare = Praca.builder().status(StatusPraca.ADOTADA).metragemM2(1250.5).build();
         var adoption = Adocao.builder().status(StatusAdocao.APROVADA).dataInicio(firstMonth.atDay(10)).build();
         var confirmed = AtendimentoDenuncia.builder()
+                .denuncia(activeIssue())
                 .status(AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR)
                 .dataAceite(firstMonth.atDay(15).atTime(8, 0))
                 .dataConfirmacaoAutor(firstMonth.atDay(16).atTime(20, 0))
                 .build();
-        var active = AtendimentoDenuncia.builder().status(AtendimentoDenunciaStatus.EM_ANDAMENTO).build();
+        var active = AtendimentoDenuncia.builder().denuncia(activeIssue()).status(AtendimentoDenunciaStatus.EM_ANDAMENTO).build();
 
         when(pracaRepository.count()).thenReturn(4L);
         when(pracaRepository.findByStatus(StatusPraca.ADOTADA)).thenReturn(List.of(adoptedSquare));
@@ -102,9 +104,14 @@ class PublicDashboardServiceTest {
 
     private AtendimentoDenuncia confirmed(LocalDateTime accepted, LocalDateTime confirmed) {
         return AtendimentoDenuncia.builder()
+                .denuncia(activeIssue())
                 .status(AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR)
                 .dataAceite(accepted)
                 .dataConfirmacaoAutor(confirmed)
                 .build();
+    }
+
+    private Denuncia activeIssue() {
+        return Denuncia.builder().ativa(true).build();
     }
 }

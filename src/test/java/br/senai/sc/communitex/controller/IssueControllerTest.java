@@ -66,6 +66,7 @@ class IssueControllerTest {
                 IssueStatus.ABERTA,
                 IssueType.BURACO,
                 LocalDateTime.now(),
+                true,
                 10L,
                 "Murilo",
                 0,
@@ -161,6 +162,7 @@ class IssueControllerTest {
                 IssueStatus.EM_ANALISE,
                 IssueType.BURACO,
                 LocalDateTime.now(),
+                true,
                 10L,
                 "Murilo",
                 1,
@@ -175,10 +177,61 @@ class IssueControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("EM_ANALISE"));
     }
+
+    @Test
+    void dadaDenunciaExistenteAoInativar_deveRetornarOk() throws Exception {
+        var response = new DenunciaResponseDTO(
+                1L,
+                "Buraco",
+                "Buraco perigoso",
+                -27.6,
+                -48.5,
+                null,
+                IssueStatus.ABERTA,
+                IssueType.BURACO,
+                LocalDateTime.now(),
+                false,
+                10L,
+                "Murilo",
+                1,
+                1
+        );
+
+        when(issueService.inativar(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/issues/{id}/inativar", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ativa").value(false));
+    }
+
+    @Test
+    void dadaDenunciaInativaAoReativar_deveRetornarOk() throws Exception {
+        var response = new DenunciaResponseDTO(
+                1L,
+                "Buraco",
+                "Buraco perigoso",
+                -27.6,
+                -48.5,
+                null,
+                IssueStatus.ABERTA,
+                IssueType.BURACO,
+                LocalDateTime.now(),
+                true,
+                10L,
+                "Murilo",
+                1,
+                1
+        );
+
+        when(issueService.reativar(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/issues/{id}/reativar", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ativa").value(true));
+    }
+
     private MockMultipartFile jsonPart(String name, String json) {
         return new MockMultipartFile(name, "", MediaType.APPLICATION_JSON_VALUE, json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }
-
-
 

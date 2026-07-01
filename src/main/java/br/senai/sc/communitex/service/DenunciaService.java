@@ -22,11 +22,15 @@ public interface DenunciaService {
 
     List<DenunciaResponseDTO> listarTodas();
 
-    Page<DenunciaResponseDTO> listarTodas(Pageable pageable);
+    Page<DenunciaResponseDTO> listarTodas(Pageable pageable, boolean incluirInativas);
 
     List<DenunciaResponseDTO> buscarPorProximidade(Double latitude, Double longitude, Double radiusMeters);
 
     DenunciaResponseDTO atualizarStatus(Long id, IssueStatus status);
+
+    DenunciaResponseDTO inativar(Long id);
+
+    DenunciaResponseDTO reativar(Long id);
 
     DenunciaInteracaoResponseDTO adicionarInteracao(Long issueId, DenunciaInteracaoRequestDTO dto);
 

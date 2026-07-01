@@ -45,7 +45,7 @@ public class UsuarioDashboardService {
             throw new ForbiddenException("A pessoa fisica autenticada nao possui usuario associado");
         }
 
-        var denuncias = denunciaRepository.findByAutorId(usuario.getId());
+        var denuncias = denunciaRepository.findByAutorIdAndAtivaTrue(usuario.getId());
         var denunciasRealizadas = denuncias.size();
         var denunciasAbertas = countDenuncias(denuncias, Set.of(IssueStatus.ABERTA));
         var denunciasEmAndamento = countDenuncias(denuncias, STATUS_EM_ANDAMENTO);
@@ -72,11 +72,11 @@ public class UsuarioDashboardService {
                 interacaoRepository.countByUsuarioIdAndTipo(usuario.getId(), InteractionType.APOIO),
                 interacaoRepository.countByUsuarioIdAndTipo(usuario.getId(), InteractionType.COMENTARIO),
                 taxaResolucao,
-                atendimentoRepository.countByDenunciaAutorIdAndStatus(usuario.getId(), AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA),
-                atendimentoRepository.countByDenunciaAutorIdAndStatus(usuario.getId(), AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR),
-                atendimentoRepository.countByDenunciaAutorIdAndStatus(usuario.getId(), AtendimentoDenunciaStatus.CONTESTADO),
+                atendimentoRepository.countByDenunciaAutorIdAndStatusAndDenunciaAtivaTrue(usuario.getId(), AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA),
+                atendimentoRepository.countByDenunciaAutorIdAndStatusAndDenunciaAtivaTrue(usuario.getId(), AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR),
+                atendimentoRepository.countByDenunciaAutorIdAndStatusAndDenunciaAtivaTrue(usuario.getId(), AtendimentoDenunciaStatus.CONTESTADO),
                 pracaRepository.findTop5ByCadastradoPorIdOrderByIdDesc(pessoa.getId()).stream().map(this::toPracaDTO).toList(),
-                denunciaRepository.findTop5ByAutorIdOrderByDataCriacaoDesc(usuario.getId()).stream().map(this::toDenunciaDTO).toList()
+                denunciaRepository.findTop5ByAutorIdAndAtivaTrueOrderByDataCriacaoDesc(usuario.getId()).stream().map(this::toDenunciaDTO).toList()
         );
     }
 
@@ -98,8 +98,9 @@ public class UsuarioDashboardService {
         var autor = denuncia.getAutor();
         return new DenunciaResponseDTO(
                 denuncia.getId(), denuncia.getTitulo(), denuncia.getDescricao(), denuncia.getLatitude(), denuncia.getLongitude(),
-                ArquivoUrls.url(denuncia.getArquivo()), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
-                autor.getNome() != null ? autor.getNome() : autor.getUsername(), interacoes.size(), (int) apoios
+                ArquivoUrls.url(denuncia.getArquivo()), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(),
+                Boolean.TRUE.equals(denuncia.getAtiva()), autor.getId(), autor.getNome() != null ? autor.getNome() : autor.getUsername(),
+                interacoes.size(), (int) apoios
         );
     }
 

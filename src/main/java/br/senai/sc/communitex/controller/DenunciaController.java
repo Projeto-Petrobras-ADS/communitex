@@ -63,8 +63,10 @@ public class DenunciaController {
     @Operation(summary = "Listar todas as denúncias")
     @ApiResponse(responseCode = "200", description = "Lista de denúncias retornada com sucesso")
     @GetMapping
-    public Page<DenunciaResponseDTO> findAll(Pageable pageable) {
-        return issueService.listarTodas(pageable);
+    public Page<DenunciaResponseDTO> findAll(
+            Pageable pageable,
+            @RequestParam(defaultValue = "false") boolean incluirInativas) {
+        return issueService.listarTodas(pageable, incluirInativas);
     }
 
     @Operation(
@@ -116,6 +118,32 @@ public class DenunciaController {
             @PathVariable Long id,
             @Valid @RequestBody IssueStatusUpdateRequest body) {
         return issueService.atualizarStatus(id, body.status());
+    }
+
+    @Operation(
+        summary = "Inativar denúncia",
+        description = "Remove a denúncia das visualizações públicas e operacionais sem apagar o registro.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "Denúncia inativada com sucesso")
+    @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
+    @PatchMapping("/{id}/inativar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DenunciaResponseDTO inativar(@PathVariable Long id) {
+        return issueService.inativar(id);
+    }
+
+    @Operation(
+        summary = "Reativar denúncia",
+        description = "Torna uma denúncia inativa novamente visível para usuários, empresas e visitantes.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "Denúncia reativada com sucesso")
+    @ApiResponse(responseCode = "404", description = "Denúncia não encontrada")
+    @PatchMapping("/{id}/reativar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DenunciaResponseDTO reativar(@PathVariable Long id) {
+        return issueService.reativar(id);
     }
 
     @Operation(

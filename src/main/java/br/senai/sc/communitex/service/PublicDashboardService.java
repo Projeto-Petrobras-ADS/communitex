@@ -41,7 +41,9 @@ public class PublicDashboardService {
         var totalPracas = pracaRepository.count();
         var pracasAdotadas = pracaRepository.findByStatus(StatusPraca.ADOTADA);
         var adocoes = adocaoRepository.findByStatusIn(STATUS_HISTORICO_ADOCAO);
-        var reparos = atendimentoRepository.findByStatusNot(AtendimentoDenunciaStatus.CANCELADO);
+        var reparos = atendimentoRepository.findByStatusNot(AtendimentoDenunciaStatus.CANCELADO).stream()
+                .filter(reparo -> reparo.getDenuncia() != null && Boolean.TRUE.equals(reparo.getDenuncia().getAtiva()))
+                .toList();
         var confirmados = reparos.stream()
                 .filter(reparo -> reparo.getStatus() == AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR)
                 .toList();

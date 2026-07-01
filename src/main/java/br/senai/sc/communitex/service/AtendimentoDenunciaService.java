@@ -47,6 +47,7 @@ public class AtendimentoDenunciaService {
     public AtendimentoDenunciaResponseDTO assumir(Long denunciaId, AssumirAtendimentoRequestDTO request) {
         var empresa = authenticatedEmpresa();
         var denuncia = denuncia(denunciaId);
+        requireDenunciaAtiva(denuncia);
         if (!STATUS_DISPONIVEIS.contains(denuncia.getStatus())) {
             throw new BusinessException("Esta denuncia nao esta disponivel para atendimento");
         }
@@ -69,6 +70,7 @@ public class AtendimentoDenunciaService {
     @Transactional
     public AtendimentoDenunciaResponseDTO iniciar(Long denunciaId) {
         var atendimento = managedAtendimento(denunciaId);
+        requireDenunciaAtiva(atendimento.getDenuncia());
         requireStatus(atendimento, AtendimentoDenunciaStatus.ACEITO);
         atendimento.setStatus(AtendimentoDenunciaStatus.EM_ANDAMENTO);
         atendimento.setDataInicio(LocalDateTime.now());
@@ -80,6 +82,7 @@ public class AtendimentoDenunciaService {
     @Transactional
     public AtendimentoDenunciaResponseDTO concluir(Long denunciaId, ConcluirAtendimentoRequestDTO request, MultipartFile arquivo) {
         var atendimento = managedAtendimento(denunciaId);
+        requireDenunciaAtiva(atendimento.getDenuncia());
         requireStatus(atendimento, AtendimentoDenunciaStatus.EM_ANDAMENTO);
         atendimento.setStatus(AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA);
         atendimento.setDescricaoReparo(request.descricaoReparo().trim());
@@ -93,6 +96,7 @@ public class AtendimentoDenunciaService {
     @Transactional
     public AtendimentoDenunciaResponseDTO confirmar(Long denunciaId) {
         var atendimento = authorAtendimento(denunciaId);
+        requireDenunciaAtiva(atendimento.getDenuncia());
         requireStatus(atendimento, AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA);
         atendimento.setStatus(AtendimentoDenunciaStatus.CONFIRMADO_PELO_AUTOR);
         atendimento.setDataConfirmacaoAutor(LocalDateTime.now());
@@ -104,6 +108,7 @@ public class AtendimentoDenunciaService {
     @Transactional
     public AtendimentoDenunciaResponseDTO contestar(Long denunciaId, ContestarAtendimentoRequestDTO request) {
         var atendimento = authorAtendimento(denunciaId);
+        requireDenunciaAtiva(atendimento.getDenuncia());
         requireStatus(atendimento, AtendimentoDenunciaStatus.CONCLUIDO_PELA_EMPRESA);
         atendimento.setStatus(AtendimentoDenunciaStatus.CONTESTADO);
         atendimento.setMotivoContestacao(request.motivo().trim());
@@ -114,13 +119,16 @@ public class AtendimentoDenunciaService {
 
     @Transactional(readOnly = true)
     public AtendimentoDenunciaResponseDTO buscar(Long denunciaId) {
-        return toResponse(atendimento(denunciaId));
+        var atendimento = atendimento(denunciaId);
+        requireDenunciaAtiva(atendimento.getDenuncia());
+        return toResponse(atendimento);
     }
 
     @Transactional(readOnly = true)
     public List<AtendimentoDenunciaResponseDTO> listarMeusAtendimentos() {
         var empresa = authenticatedEmpresa();
         return atendimentoRepository.findByEmpresaIdOrderByDataAceiteDesc(empresa.getId()).stream()
+                .filter(atendimento -> isDenunciaAtiva(atendimento.getDenuncia()))
                 .map(this::toResponse)
                 .toList();
     }
@@ -128,7 +136,7 @@ public class AtendimentoDenunciaService {
     @Transactional(readOnly = true)
     public List<DenunciaResponseDTO> listarDisponiveis() {
         authenticatedEmpresa();
-        return denunciaRepository.findByStatusIn(List.copyOf(STATUS_DISPONIVEIS)).stream()
+        return denunciaRepository.findByStatusInAndAtivaTrue(List.copyOf(STATUS_DISPONIVEIS)).stream()
                 .filter(denuncia -> !atendimentoRepository.existsByDenunciaId(denuncia.getId()))
                 .map(this::toDenunciaDTO)
                 .toList();
@@ -184,6 +192,16 @@ public class AtendimentoDenunciaService {
         }
     }
 
+    private void requireDenunciaAtiva(Denuncia denuncia) {
+        if (!isDenunciaAtiva(denuncia)) {
+            throw new ResourceNotFoundException("Denuncia nao encontrada");
+        }
+    }
+
+    private boolean isDenunciaAtiva(Denuncia denuncia) {
+        return denuncia != null && Boolean.TRUE.equals(denuncia.getAtiva());
+    }
+
     private AtendimentoDenunciaResponseDTO toResponse(AtendimentoDenuncia atendimento) {
         var username = authenticatedUsername();
         var empresa = atendimento.getEmpresa();
@@ -208,8 +226,9 @@ public class AtendimentoDenunciaService {
         var autor = denuncia.getAutor();
         return new DenunciaResponseDTO(
                 denuncia.getId(), denuncia.getTitulo(), denuncia.getDescricao(), denuncia.getLatitude(), denuncia.getLongitude(),
-                ArquivoUrls.url(denuncia.getArquivo()), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(), autor.getId(),
-                autor.getNome() != null ? autor.getNome() : autor.getUsername(), interacoes.size(), (int) apoios
+                ArquivoUrls.url(denuncia.getArquivo()), denuncia.getStatus(), denuncia.getTipo(), denuncia.getDataCriacao(),
+                Boolean.TRUE.equals(denuncia.getAtiva()), autor.getId(), autor.getNome() != null ? autor.getNome() : autor.getUsername(),
+                interacoes.size(), (int) apoios
         );
     }
 }

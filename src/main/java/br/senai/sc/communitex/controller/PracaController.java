@@ -69,12 +69,12 @@ public class PracaController {
 
     @Operation(
         summary = "Criar nova praça",
-        description = "Cria uma nova praça. A pessoa física cadastrante é obtida automaticamente do token JWT.",
+        description = "Cria uma nova praça. Quando houver pessoa física associada ao token JWT, ela será usada como cadastrante.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "201", description = "Praça criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
-    @ApiResponse(responseCode = "403", description = "Acesso negado - apenas pessoas físicas podem cadastrar praças")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)

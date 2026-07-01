@@ -19,13 +19,19 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     Page<Denuncia> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    Page<Denuncia> findByAtivaTrue(Pageable pageable);
+
     @Override
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findAll();
 
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findByAtivaTrue();
+
     List<Denuncia> findByTipoAndStatusNot(IssueType tipo, IssueStatus status);
 
-    @Query("SELECT d FROM Denuncia d WHERE d.tipo = :tipo AND d.status NOT IN :statusResolvidos")
+    @Query("SELECT d FROM Denuncia d WHERE d.ativa = true AND d.tipo = :tipo AND d.status NOT IN :statusResolvidos")
     List<Denuncia> findUnresolvedByType(
         @Param("tipo") IssueType tipo,
         @Param("statusResolvidos") List<IssueStatus> statusResolvidos
@@ -34,6 +40,9 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findByAutorId(Long autorId);
 
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findByAutorIdAndAtivaTrue(Long autorId);
+
     long countByAutorId(Long autorId);
 
     long countByAutorIdAndStatus(Long autorId, IssueStatus status);
@@ -41,13 +50,27 @@ public interface DenunciaRepository extends JpaRepository<Denuncia, Long> {
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findTop5ByAutorIdOrderByDataCriacaoDesc(Long autorId);
 
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findTop5ByAutorIdAndAtivaTrueOrderByDataCriacaoDesc(Long autorId);
+
     List<Denuncia> findByStatus(IssueStatus status);
 
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findByStatusIn(List<IssueStatus> statuses);
 
     @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findByStatusInAndAtivaTrue(List<IssueStatus> statuses);
+
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
     List<Denuncia> findByLatitudeBetweenAndLongitudeBetween(
+            Double minLatitude,
+            Double maxLatitude,
+            Double minLongitude,
+            Double maxLongitude
+    );
+
+    @EntityGraph(attributePaths = {"autor", "interacoes", "interacoes.usuario"})
+    List<Denuncia> findByAtivaTrueAndLatitudeBetweenAndLongitudeBetween(
             Double minLatitude,
             Double maxLatitude,
             Double minLongitude,

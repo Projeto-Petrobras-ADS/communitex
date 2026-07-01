@@ -67,6 +67,10 @@ public class Denuncia {
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean ativa = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "autor_id", nullable = false)
     private Usuario autor;
@@ -80,6 +84,9 @@ public class Denuncia {
         this.dataCriacao = LocalDateTime.now();
         if (this.status == null) {
             this.status = IssueStatus.ABERTA;
+        }
+        if (this.ativa == null) {
+            this.ativa = true;
         }
     }
 }

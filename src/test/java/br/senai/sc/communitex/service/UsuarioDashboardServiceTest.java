@@ -64,8 +64,8 @@ class UsuarioDashboardServiceTest {
                 UsernamePasswordAuthenticationToken.authenticated("maria@email.com", "secret", List.of())
         );
         when(pessoaFisicaRepository.findByUsuarioUsername("maria@email.com")).thenReturn(Optional.of(pessoa));
-        when(denunciaRepository.findByAutorId(7L)).thenReturn(List.of(resolvida, aberta));
-        when(denunciaRepository.findTop5ByAutorIdOrderByDataCriacaoDesc(7L)).thenReturn(List.of(resolvida, aberta));
+        when(denunciaRepository.findByAutorIdAndAtivaTrue(7L)).thenReturn(List.of(resolvida, aberta));
+        when(denunciaRepository.findTop5ByAutorIdAndAtivaTrueOrderByDataCriacaoDesc(7L)).thenReturn(List.of(resolvida, aberta));
         when(pracaRepository.countByCadastradoPorId(3L)).thenReturn(2L);
         when(pracaRepository.countByCadastradoPorIdAndStatus(3L, StatusPraca.DISPONIVEL)).thenReturn(1L);
         when(pracaRepository.countByCadastradoPorIdAndStatus(3L, StatusPraca.EM_PROCESSO)).thenReturn(1L);

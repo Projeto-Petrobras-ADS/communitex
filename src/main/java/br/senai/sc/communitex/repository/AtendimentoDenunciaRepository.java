@@ -23,4 +23,6 @@ public interface AtendimentoDenunciaRepository extends JpaRepository<Atendimento
     long countByEmpresaIdAndStatus(Long empresaId, AtendimentoDenunciaStatus status);
 
     long countByDenunciaAutorIdAndStatus(Long autorId, AtendimentoDenunciaStatus status);
+
+    long countByDenunciaAutorIdAndStatusAndDenunciaAtivaTrue(Long autorId, AtendimentoDenunciaStatus status);
 }

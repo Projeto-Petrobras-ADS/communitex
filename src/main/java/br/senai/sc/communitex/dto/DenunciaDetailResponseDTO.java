@@ -16,10 +16,10 @@ public record DenunciaDetailResponseDTO(
     IssueStatus status,
     IssueType tipo,
     LocalDateTime dataCriacao,
+    Boolean ativa,
     Long autorId,
     String autorNome,
     int totalApoios,
     int totalCurtidas,
     List<DenunciaInteracaoResponseDTO> interacoes
 ) {}
-
